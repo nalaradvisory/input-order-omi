@@ -245,19 +245,42 @@ const dateToExcelSerial=d=>Math.floor((d-new Date(1899,11,30))/(24*60*60*1000));
 const todaySerial=()=>dateToExcelSerial(new Date());
 const formatCurrency=n=>{if(isNaN(n)||n===null)return'Rp 0';return'Rp '+Math.round(n).toLocaleString('id-ID')};
 
-function parsePrice(val){if(val==null||val==='')return 0;let s=String(val).trim().replace(/,/g,'');const n=parseFloat(s);return isNaN(n)?0:n}
-function parseDiscount(val){if(!val||val==='')return 0;let s=String(val).trim().replace(/%/g,'').replace(/,/g,'.');const n=parseFloat(s);if(isNaN(n))return 0;return n>1?n/100:n}
-
-// ===== PROMO SPLIT (FIXED) =====
-function calculatePromoSplit(qty,promoType){
-if(promoType==='PASIR'||promoType==='NONE'){return{paidQty:qty,freeQty:0,type:'NONE'}}
-if(promoType==='SBO'){
-if(qty>=12&&qty%12===0){const f=qty/12;return{paidQty:qty-f,freeQty:f,type:'PROMO12'}}
-return{paidQty:qty,freeQty:0,type:'NONE'}
+function parsePrice(val){
+if(val==null||val==='')return 0;
+let s=String(val).trim().replace(/,/g,'');
+const n=parseFloat(s);
+return isNaN(n)?0:n;
 }
-// FREE11: floor(qty/11) — order 20 dapet 1 free, order 33 dapet 3 free
-const freeQty=Math.floor(qty/11);
-return{paidQty:qty,freeQty,type:freeQty>0?'PROMO11':'NONE'}
+
+function parseDiscount(val){
+if(!val||val==='')return 0;
+let s=String(val).trim().replace(/%/g,'').replace(/,/g,'.');
+const n=parseFloat(s);
+if(isNaN(n))return 0;
+return n>1?n/100:n;
+}
+
+// ===== PROMO SPLIT LOGIC (FIXED) =====
+// Input 11 → 11 bayar + 1 free (total 12, EXTRA)
+// Input 12 → 11 bayar + 1 free (total 12, SAMA)
+// Input 40 → 37 bayar + 3 free (total 40, SAMA)
+function calculatePromoSplit(qty,promoType){
+if(promoType==='PASIR'||promoType==='NONE')return{paidQty:qty,freeQty:0,type:'NONE'};
+if(qty<11)return{paidQty:qty,freeQty:0,type:'NONE'};
+
+// Kelipatan 11: EXTRA free (total output > input)
+if(qty%11===0){
+const freeQty=qty/11;
+return{paidQty:qty,freeQty,type:'PROMO11'};
+}
+
+// Non-kelipatan 11 tapi >= 12: free = floor(qty/12), paid berkurang
+const freeQty=Math.floor(qty/12);
+if(freeQty>0){
+return{paidQty:qty-freeQty,freeQty,type:'PROMO12'};
+}
+
+return{paidQty:qty,freeQty:0,type:'NONE'};
 }
 
 function goToStep(step){
@@ -280,8 +303,13 @@ document.getElementById(idMap[type]).textContent=file.name;
 document.getElementById(boxMap[type]).classList.add('uploaded');
 const reader=new FileReader();
 reader.onload=e=>{
-try{const wb=XLSX.read(e.target.result,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];state.fileData[type]=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});checkUploadComplete()}
-catch(err){alert('Error membaca file: '+err.message)}
+try{
+const wb=XLSX.read(e.target.result,{type:'array'});
+const ws=wb.Sheets[wb.SheetNames[0]];
+state.fileData[type]=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+console.log(`[DEBUG] File ${type}: ${state.fileData[type].length} rows`);
+checkUploadComplete();
+}catch(err){alert('Error membaca file: '+err.message)}
 };
 reader.readAsArrayBuffer(file);
 }
@@ -349,45 +377,109 @@ return obj;
 });
 }
 
+// ===== STOCK PARSING (REWRITTEN - lebih robust) =====
 function parseStockFile(data,targetWarehouse){
 const stockMap={};
-if(!data||!Array.isArray(data))return stockMap;
-let currentWarehouse='';let foundHeader=false;
-for(let i=0;i<data.length;i++){
-const row=data[i];if(!row||!Array.isArray(row))continue;
-const cells=[];for(let j=0;j<7;j++){cells.push(row[j]!=null?String(row[j]).trim():'')}
-const col0=cells[0];const col1=cells[1];const col6=cells[6];
-if(!col0&&!col1&&!col6)continue;
-const col0Lower=col0.toLowerCase();
-if(col0Lower.includes('kode produk')||col0Lower.includes('kode produk / sku')){foundHeader=true;continue}
-if(!foundHeader)continue;
-if(col0Lower.includes('olego mandiri'))continue;
-if(col0.includes('---'))continue;
-if(col0Lower.includes('pergerakan barang'))continue;
-if(/^\d{2}\/\d{2}\/\d{4}$/.test(col0))continue;
-const rowStr=cells.join('|').toLowerCase();
-if(rowStr.includes('subtotal'))continue;
-if(rowStr.includes('grand total'))continue;
-if(col0!==''&&col1===''){currentWarehouse=col0;continue}
-if(col0!==''&&col1!==''){
-if(currentWarehouse.toLowerCase().trim()===targetWarehouse.toLowerCase().trim()){
-const qty=parseFloat(col6)||0;
-if(!stockMap[col1])stockMap[col1]={name:col1,qty:0};
-stockMap[col1].qty+=qty;
-}
-}
-}
+if(!data||!Array.isArray(data)||data.length===0){
+console.warn('[STOCK] Data kosong');
 return stockMap;
 }
 
+// Step 1: Cari header row
+let headerIdx=-1;
+let namaIdx=-1;
+let qtyAkhirIdx=-1;
+
+for(let i=0;i<Math.min(data.length,50);i++){
+const row=data[i];
+if(!row||!Array.isArray(row))continue;
+const rowLower=row.map(c=>c==null?'':String(c).toLowerCase().trim());
+
+// Cek apakah row ini mengandung "nama produk" atau "kode produk"
+const hasNama=rowLower.some(c=>c.includes('nama produk')||c.includes('nama'));
+const hasKode=rowLower.some(c=>c.includes('kode produk')||c.includes('kode'));
+const hasQty=rowLower.some(c=>c.includes('qty'));
+
+if(hasNama&&hasKode&&hasQty){
+headerIdx=i;
+namaIdx=rowLower.findIndex(c=>c.includes('nama'));
+qtyAkhirIdx=rowLower.findIndex(c=>c.includes('akhir'));
+if(qtyAkhirIdx===-1)qtyAkhirIdx=rowLower.findIndex(c=>c.includes('qty')&&rowLower.indexOf(c)===rowLower.length-1);
+if(qtyAkhirIdx===-1)qtyAkhirIdx=6; // default kolom terakhir
+break;
+}
+}
+
+if(headerIdx===-1){
+console.warn('[STOCK] Header tidak ditemukan');
+return stockMap;
+}
+
+console.log(`[STOCK] Header di row ${headerIdx}, namaIdx=${namaIdx}, qtyAkhirIdx=${qtyAkhirIdx}, target="${targetWarehouse}"`);
+
+// Step 2: Parse data rows
+let currentWarehouse='';
+let itemCount=0;
+
+for(let i=headerIdx+1;i<data.length;i++){
+const row=data[i];
+if(!row||!Array.isArray(row))continue;
+
+// Ambil semua cell sebagai string
+const cells=[];
+for(let j=0;j<Math.max(row.length,7);j++){
+cells.push(row[j]!=null?String(row[j]).trim():'');
+}
+
+const col0=cells[0];
+const namaVal=(namaIdx>=0&&namaIdx<cells.length)?cells[namaIdx]:'';
+const qtyVal=(qtyAkhirIdx>=0&&qtyAkhirIdx<cells.length)?cells[qtyAkhirIdx]:'';
+
+// Skip empty rows
+if(!col0&&!namaVal)continue;
+
+// Skip subtotal/grand total
+const rowJoined=cells.join('|').toLowerCase();
+if(rowJoined.includes('subtotal')||rowJoined.includes('grand total'))continue;
+
+// Skip header berulang (PT. Olego Mandiri Indonesia, ---, Pergerakan Barang, tanggal)
+if(col0.toLowerCase().includes('olego mandiri'))continue;
+if(col0.includes('---'))continue;
+if(col0.toLowerCase().includes('pergerakan barang'))continue;
+if(/^\d{2}\/\d{2}\/\d{4}$/.test(col0))continue;
+
+// Warehouse detection: col0 ada isi, tapi nama column kosong
+if(col0!==''&&namaVal===''){
+currentWarehouse=col0;
+continue;
+}
+
+// Product row: col0 dan nama ada isi
+if(col0!==''&&namaVal!==''){
+if(currentWarehouse.toLowerCase().trim()===targetWarehouse.toLowerCase().trim()){
+const qty=parseFloat(qtyVal)||0;
+if(!stockMap[namaVal]){
+stockMap[namaVal]={name:namaVal,qty:0};
+}
+stockMap[namaVal].qty+=qty;
+itemCount++;
+}
+}
+}
+
+console.log(`[STOCK] Warehouse "${targetWarehouse}": ${itemCount} items, ${Object.keys(stockMap).length} unique products`);
+return stockMap;
+}
+
+// Matching stock by ProductName (case-insensitive, normalize spaces)
 function getStockQty(stockMap,productName){
 if(!productName)return 0;
 const key=String(productName).trim();
 if(stockMap[key])return stockMap[key].qty;
-const lowerKey=key.toLowerCase();
-for(const k in stockMap){if(k.toLowerCase()===lowerKey)return stockMap[k].qty}
-const normalizedKey=lowerKey.replace(/\s+/g,' ');
-for(const k in stockMap){if(k.toLowerCase().replace(/\s+/g,' ')===normalizedKey)return stockMap[k].qty}
+const lowerKey=key.toLowerCase().replace(/\s+/g,' ');
+for(const k in stockMap){
+if(k.toLowerCase().replace(/\s+/g,' ')===lowerKey)return stockMap[k].qty;
+}
 return 0;
 }
 
@@ -421,15 +513,33 @@ const alertEl=document.getElementById('upload-alert');
 alertEl.innerHTML='<div class="loading"><div class="spinner"></div> Memproses data...</div>';
 try{
 const sheets=await fetchGoogleSheets();
-state.gsheetData={productList:sheets.ProductList||[],customerList:sheets.CustomerList||[],promoTier:sheets.PromoTier||[],discountRules:sheets.ProductDiscountRules||[]};
-if(state.gsheetData.productList.length===0){alertEl.innerHTML='<div class="alert alert-error">❌ Gagal mengambil ProductList.</div>';return}
+state.gsheetData={
+productList:sheets.ProductList||[],
+customerList:sheets.CustomerList||[],
+promoTier:sheets.PromoTier||[],
+discountRules:sheets.ProductDiscountRules||[]
+};
+if(state.gsheetData.productList.length===0){
+alertEl.innerHTML='<div class="alert alert-error">❌ Gagal mengambil ProductList.</div>';
+return;
+}
+
 const stockPT=parseStockFile(state.fileData.stockPT,'Unassigned');
 const stockPribadi=parseStockFile(state.fileData.stockPribadi,'OMI/HO/WRHS');
+
 const orderItems=parseFormOrder(state.fileData.order);
-if(orderItems.length===0){alertEl.innerHTML='<div class="alert alert-error">❌ Tidak ada item valid di Form Order.</div>';return}
+if(orderItems.length===0){
+alertEl.innerHTML='<div class="alert alert-error">❌ Tidak ada item valid di Form Order.</div>';
+return;
+}
+
 state.processedItems=orderItems.map(item=>{
-const product=state.gsheetData.productList.find(p=>normalizeStr(p.Kode)===normalizeStr(item.kode))||state.gsheetData.productList.find(p=>normalizeStr(p.Description)===normalizeStr(item.deskripsi));
+const product=state.gsheetData.productList.find(p=>normalizeStr(p.Kode)===normalizeStr(item.kode))
+||state.gsheetData.productList.find(p=>normalizeStr(p.Description)===normalizeStr(item.deskripsi));
+
 if(!product)return{...item,found:false,productName:item.deskripsi,productCode:item.kode,stockPT:0,stockPribadi:0,totalStock:0};
+
+// FIX: Matching stock pakai ProductName dari ProductList
 const sPTQty=getStockQty(stockPT,product.ProductName);
 const sPrQty=getStockQty(stockPribadi,product.ProductName);
 const promoType=(product.PromoType||'').trim().toUpperCase();
@@ -437,11 +547,29 @@ let hasTierWarning=false;
 if(promoType==='TIER'||promoType==='PASIR'){
 if(!state.gsheetData.promoTier.some(t=>normalizeStr(t.Deskripsi)===normalizeStr(product.Description)))hasTierWarning=true;
 }
-return{...item,found:true,product,productName:product.ProductName||item.deskripsi,productCode:product.Kode||item.kode,description:product.Description||item.deskripsi,unit:product.Unit||'Pcs',promoType,nettPriceOutput:(product.NettPriceOutput||'NettSellPricePPN').trim(),netSellPrice:parsePrice(product.NetSellPrice),netSellPricePPN:parsePrice(product.NetSellPricePPN),stockPT:sPTQty,stockPribadi:sPrQty,totalStock:sPTQty+sPrQty,promoEnabled:true,hasTierWarning};
+return{
+...item,found:true,product,
+productName:product.ProductName||item.deskripsi,
+productCode:product.Kode||item.kode,
+description:product.Description||item.deskripsi,
+unit:product.Unit||'Pcs',
+promoType,
+nettPriceOutput:(product.NettPriceOutput||'NettSellPricePPN').trim(),
+netSellPrice:parsePrice(product.NetSellPrice),
+netSellPricePPN:parsePrice(product.NetSellPricePPN),
+stockPT:sPTQty,stockPribadi:sPrQty,totalStock:sPTQty+sPrQty,
+promoEnabled:true,hasTierWarning
+};
 });
-alertEl.innerHTML=`<div class="alert alert-success">✅ ${orderItems.length} item diproses.</div>`;
-setTimeout(()=>{goToStep(2);renderCustomerList()},800);
-}catch(err){alertEl.innerHTML=`<div class="alert alert-error">❌ Error: ${err.message}</div>`}
+
+const ptCount=Object.keys(stockPT).length;
+const prCount=Object.keys(stockPribadi).length;
+alertEl.innerHTML=`<div class="alert alert-success">✅ ${orderItems.length} item diproses.<br>Stock PT: ${ptCount} produk | Stock Pribadi: ${prCount} produk terdeteksi</div>`;
+setTimeout(()=>{goToStep(2);renderCustomerList()},1200);
+}catch(err){
+console.error('[ERROR]',err);
+alertEl.innerHTML=`<div class="alert alert-error">❌ Error: ${err.message}</div>`;
+}
 }
 
 function renderCustomerList(){
@@ -483,8 +611,11 @@ tiers.sort((a,b)=>(parseInt(b.TierQty)||0)-(parseInt(a.TierQty)||0));
 const sel=tiers.find(tier=>item.qty>=(parseInt(tier.TierQty)||0));
 if(sel){
 let p;
-if(area.includes('JABODETABEK')){p=item.nettPriceOutput==='NettSellPrice'?parsePrice(sel.NettSellPriceJabodetabek):parsePrice(sel.NettSellPricePPNJabodetabek)}
-else{p=item.nettPriceOutput==='NettSellPrice'?parsePrice(sel.NettSellPriceJawaBali):parsePrice(sel.NettSellPricePPNJawaBali)}
+if(area.includes('JABODETABEK')){
+p=item.nettPriceOutput==='NettSellPrice'?parsePrice(sel.NettSellPriceJabodetabek):parsePrice(sel.NettSellPricePPNJabodetabek);
+}else{
+p=item.nettPriceOutput==='NettSellPrice'?parsePrice(sel.NettSellPriceJawaBali):parsePrice(sel.NettSellPricePPNJawaBali);
+}
 if(!isNaN(p)&&p>0)return{unitPrice:Math.round(p)};
 }
 }
@@ -506,25 +637,20 @@ function getPromoInfo(item){
 if(!item.found||!item.promoEnabled)return'No Promo';
 if(item.promoType==='NONE'||item.promoType==='PASIR')return'No Promo';
 const split=calculatePromoSplit(item.qty,item.promoType);
-if(split.type==='PROMO12')return`Promo 12 (Bayar ${split.paidQty}, Free ${split.freeQty})`;
 if(split.type==='PROMO11')return`Promo 11 (Bayar ${split.paidQty}, Free ${split.freeQty})`;
+if(split.type==='PROMO12')return`Promo 12 (Bayar ${split.paidQty}, Free ${split.freeQty})`;
 return'No Promo';
 }
 
-// ===== RENDER REVIEW TABLE (FIXED Total Price) =====
 function renderReviewTable(){
 const customer=state.gsheetData.customerList[state.selectedCustomer];
 if(!customer)return;
 document.getElementById('review-customer-info').textContent=`Customer: ${customer.CustomerName} | Area: ${customer.Area} | Discount: ${parseDiscount(customer.DiscountRate)*100}%`;
 const tbody=document.getElementById('review-table-body');
 let totalItems=0,avail=0,notAvail=0;
-let html='';
 
-state.processedItems.forEach((item,idx)=>{
-if(!item.found){
-html+=`<tr class="row-danger"><td>❌</td><td>${item.productCode}</td><td>${item.productName}</td><td><input type="number" class="qty-input" value="${item.qty}" data-idx="${idx}"></td><td>-</td><td>-</td><td>-</td><td><span class="badge badge-danger">Not Found</span></td><td>-</td><td>-</td><td>-</td></tr>`;
-return;
-}
+tbody.innerHTML=state.processedItems.map((item,idx)=>{
+if(!item.found)return`<tr class="row-danger"><td>❌</td><td>${item.productCode}</td><td>${item.productName}</td><td><input type="number" class="qty-input" value="${item.qty}" data-idx="${idx}"></td><td>-</td><td>-</td><td>-</td><td><span class="badge badge-danger">Not Found</span></td><td>-</td><td>-</td><td>-</td></tr>`;
 const isAvail=item.qty<=item.totalStock;
 if(isAvail)avail++;else notAvail++;
 totalItems++;
@@ -532,8 +658,7 @@ const priceInfo=calculatePrice(item,customer);
 const totalPrice=priceInfo.unitPrice*item.qty;
 const promoInfo=getPromoInfo(item);
 const warnBadge=item.hasTierWarning?' <span class="badge badge-warning">⚠ Tier missing</span>':'';
-
-html+=`<tr class="${isAvail?'':'row-danger'}">
+return`<tr class="${isAvail?'':'row-danger'}">
 <td><div class="toggle-wrapper"><div class="toggle ${item.promoEnabled?'active':''}" data-toggle="${idx}"></div></div></td>
 <td style="font-size:11px;color:var(--ink-3)">${item.productCode}</td>
 <td style="font-weight:500">${item.productName}</td>
@@ -546,9 +671,8 @@ html+=`<tr class="${isAvail?'':'row-danger'}">
 <td style="font-weight:600">${formatCurrency(priceInfo.unitPrice)}</td>
 <td style="font-weight:600">${formatCurrency(totalPrice)}</td>
 </tr>`;
-});
+}).join('');
 
-tbody.innerHTML=html;
 document.getElementById('review-summary').innerHTML=`
 <div class="summary-item"><div class="label">Total Items</div><div class="value">${totalItems}</div></div>
 <div class="summary-item"><div class="label">Available</div><div class="value" style="color:var(--success)">${avail}</div></div>
@@ -568,12 +692,10 @@ renderReviewTable();
 });
 }
 
-// ===== GENERATE PREVIEW (FIXED Order Number validation) =====
 function generatePreview(){
 const orderNumberEl=document.getElementById('order-number');
 const orderNumber=orderNumberEl.value.trim();
 const errorEl=document.getElementById('order-number-error');
-
 if(!orderNumber){
 orderNumberEl.classList.add('input-error');
 errorEl.classList.add('show');
@@ -605,6 +727,7 @@ paidQty=split.paidQty;
 freeQty=split.freeQty;
 }
 
+// Row utama (paid)
 rows.push({
 customer:customer.CustomerName,email:FIXED_EMAIL,
 billingAddress:customer.BillingAddress||'',shippingAddress:customer.ShippingAddress||'',
@@ -618,6 +741,7 @@ taxName:isFirstRow?'VAT -':''
 });
 isFirstRow=false;
 
+// Row free (jika ada)
 if(freeQty>0){
 rows.push({
 customer:customer.CustomerName,email:FIXED_EMAIL,
@@ -673,7 +797,6 @@ const name=(customer.CustomerName||'Customer').replace(/[^a-zA-Z0-9]/g,'-');
 XLSX.writeFile(wb,`SalesOrder_${name}_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
-// Order Number live validation
 document.getElementById('order-number').addEventListener('input',function(){
 if(this.value.trim()){
 this.classList.remove('input-error');
