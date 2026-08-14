@@ -50,8 +50,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .btn-secondary:hover{background:var(--line-soft)}
 .btn-sm{padding:6px 12px;font-size:12px}
 .table-wrapper{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--line)}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th{background:var(--bg);padding:10px 12px;text-align:left;font-weight:600;color:var(--ink-2);white-space:nowrap;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;box-shadow:0 1px 0 var(--line)}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+/* [FITUR] FREEZE ROW: judul kolom sticky di top 0 */
+th{background:var(--bg);padding:10px 12px;text-align:left;font-weight:600;color:var(--ink-2);white-space:nowrap;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:6;box-shadow:0 1px 0 var(--line)}
+/* [FITUR] FREEZE ROW: baris filter sticky di bawah judul */
+.filter-row th{top:41px;z-index:5;padding:6px 8px}
 td{padding:10px 12px;border-bottom:1px solid var(--line-soft);vertical-align:middle;color:var(--ink)}
 tr:hover td{background:var(--grey-soft)}
 tr.row-danger td{background:var(--danger-light)}
@@ -87,12 +90,8 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 .qty-input{width:70px;padding:6px 8px;background:var(--bg);border:1px solid var(--line);border-radius:4px;color:var(--ink);font-size:13px;text-align:center}
 .qty-input:focus{border-color:var(--teal);outline:none}
 .qty-grey{color:var(--ink-3)!important}
-.flex{display:flex}
-.flex-between{display:flex;justify-content:space-between;align-items:center}
-.gap-2{gap:8px}
-.mt-3{margin-top:12px}
-.mt-4{margin-top:16px}
-.mb-4{margin-bottom:16px}
+.flex{display:flex}.flex-between{display:flex;justify-content:space-between;align-items:center}
+.gap-2{gap:8px}.mt-3{margin-top:12px}.mt-4{margin-top:16px}.mb-4{margin-bottom:16px}
 .table-scroll{max-height:520px;overflow-y:auto;position:relative}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:768px){.grid-2{grid-template-columns:1fr}}
@@ -104,8 +103,6 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 .th-sort{cursor:pointer;user-select:none}
 .th-sort:hover{color:var(--teal)}
 .sort-ind{margin-left:5px;font-size:10px;color:var(--teal);font-weight:700}
-/* STICKY HEADER + FILTER ROW */
-.filter-row th{position:sticky;top:40px;z-index:4;padding:6px 8px;background:var(--bg);border-bottom:1px solid var(--line);box-shadow:0 1px 0 var(--line)}
 .col-filter{width:100%;min-width:70px;padding:5px 8px;font-size:12px;background:var(--surface);border:1px solid var(--line);border-radius:6px;color:var(--ink);outline:none}
 .col-filter:focus{border-color:var(--teal)}
 .hint{font-size:11px;color:var(--ink-3);margin-bottom:8px}
@@ -129,11 +126,11 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 <div class="section active" id="section-1">
 <div class="card">
 <div class="card-title">Upload Data</div>
-<div class="card-desc">Upload 3 file Excel. Master data otomatis diambil dari Google Sheets.</div>
+<div class="card-desc">Upload 3 file Excel. Master data otomatis dibaca dari Google Sheets.</div>
 <div class="upload-grid">
-<div class="upload-box" id="upload-order"><span class="upload-badge">Wajib</span><div class="upload-icon">📋</div><div class="upload-label">Form Order Customer</div><div class="upload-hint">Pilih file...</div><div class="upload-file" id="file-order-name"></div><input type="file" id="file-order" accept=".xlsx,.xls" data-type="order" class="file-input"></div>
-<div class="upload-box" id="upload-stock-pt"><span class="upload-badge">Wajib</span><div class="upload-icon">🏢</div><div class="upload-label">Stock PT</div><div class="upload-hint">Pilih file...</div><div class="upload-file" id="file-stock-pt-name"></div><input type="file" id="file-stock-pt" accept=".xlsx,.xls" data-type="stockPT" class="file-input"></div>
-<div class="upload-box" id="upload-stock-pribadi"><span class="upload-badge">Wajib</span><div class="upload-icon">🏠</div><div class="upload-label">Stock Pribadi</div><div class="upload-hint">Pilih file...</div><div class="upload-file" id="file-stock-pribadi-name"></div><input type="file" id="file-stock-pribadi" accept=".xlsx,.xls" data-type="stockPribadi" class="file-input"></div>
+<div class="upload-box" id="upload-order"><span class="upload-badge">Wajib</span><div class="upload-icon">📋</div><div class="upload-label">Form Order Customer</div><div class="upload-hint">Kategori | Kode | Deskripsi | Qty | Total</div><div class="upload-file" id="file-order-name"></div><input type="file" id="file-order" accept=".xlsx,.xls" data-type="order" class="file-input"></div>
+<div class="upload-box" id="upload-stock-pt"><span class="upload-badge">Wajib</span><div class="upload-icon">🏢</div><div class="upload-label">Stock PT</div><div class="upload-hint">Laporan Pergerakan Barang Gudang (Unassigned)</div><div class="upload-file" id="file-stock-pt-name"></div><input type="file" id="file-stock-pt" accept=".xlsx,.xls" data-type="stockPT" class="file-input"></div>
+<div class="upload-box" id="upload-stock-pribadi"><span class="upload-badge">Wajib</span><div class="upload-icon">🏠</div><div class="upload-label">Stock Pribadi</div><div class="upload-hint">Laporan Pergerakan Barang Gudang (OMI/HO/WRHS)</div><div class="upload-file" id="file-stock-pribadi-name"></div><input type="file" id="file-stock-pribadi" accept=".xlsx,.xls" data-type="stockPribadi" class="file-input"></div>
 </div>
 <div id="upload-alert" class="mt-3"></div>
 <div class="mt-4"><button class="btn btn-primary" id="btn-process" disabled>Proses & Lanjut →</button></div>
@@ -146,7 +143,6 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 <div class="card-desc">Cari dan pilih customer untuk order ini.</div>
 <div class="search-box"><input type="text" class="input-field" id="customer-search" placeholder="Cari customer..."></div>
 <div id="customer-list" style="max-height:300px;overflow-y:auto;"></div>
-<div id="customer-alert" class="mt-3"></div>
 <div class="flex gap-2 mt-4">
 <button class="btn btn-secondary" id="btn-back-1">← Kembali</button>
 <button class="btn btn-primary" id="btn-to-step3" disabled>Lanjut ke Review →</button>
@@ -161,11 +157,11 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 <button class="btn btn-secondary btn-sm" id="btn-back-2">← Ganti Customer</button>
 </div>
 <div class="grid-2 mb-4">
-<div class="input-group"><label class="input-label">Order Number *</label><input type="text" class="input-field" id="order-number" placeholder="Contoh: 100001"><div class="error-msg" id="order-number-error" style="color:var(--danger);font-size:12px;margin-top:4px;display:none">⚠ Order Number wajib diisi!</div></div>
+<div class="input-group"><label class="input-label">Order Number *</label><input type="text" class="input-field" id="order-number" placeholder="Contoh: 100001"><div id="order-number-error" style="color:var(--danger);font-size:12px;margin-top:4px;display:none">⚠ Order Number wajib diisi!</div></div>
 <div class="input-group"><label class="input-label">Shipping Date (Optional)</label><input type="date" class="input-field" id="shipping-date"></div>
 </div>
 <div class="summary-bar" id="review-summary"></div>
-<div class="hint">Klik header = sort (▲/▼) • Shift+Klik = multi-sort • Isi baris filter untuk multi-filter</div>
+<div class="hint">Klik header = sort (▲/▼) • Shift+Klik = multi-sort • Baris bawah header = filter (multi-kolom)</div>
 <div class="table-scroll">
 <div class="table-wrapper">
 <table>
@@ -174,7 +170,6 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 </table>
 </div>
 </div>
-<div id="review-alert" class="mt-3"></div>
 <div class="flex gap-2 mt-4">
 <button class="btn btn-secondary" id="btn-back-2b">← Kembali</button>
 <button class="btn btn-primary" id="btn-generate">Generate Preview →</button>
@@ -213,10 +208,9 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 document.addEventListener('DOMContentLoaded',()=>{
 const GSHEET_ID='1qcYg15I3Peg_oNhdCXNciEnG82ltj22jtoA4jz6d4pE';
 const GSHEET_BASE=`https://docs.google.com/spreadsheets/d/${GSHEET_ID}/gviz/tq?tqx=out:csv&sheet=`;
-const FIXED_EMAIL="agrindoconsultant1@gmail.com, ghena.fakturpajak@gmail.com, acc.omi001@gmail.com";
 const FIXED_MESSAGE="- Barang yang sudah dibeli tidak dapat dikembalikan atau ditukar.\n\n- Harap mencantumkan Nomor Faktur di kolom berita untuk konfirmasi pembayaran.\n\n- Payment Rekening BCA : \n5810550718 A/N PT.OLEGO MANDIRI INDONESIA.";
-
-const state={currentStep:1,fileData:{order:null,stockPT:null,stockPribadi:null},gsheetData:{productList:[],customerList:[],promoTier:[],discountRules:[]},selectedCustomer:null,processedItems:[],outputRows:[],filters:{},sorts:[]};
+/* [FITUR] PETSHOP RULE: fallback bawaan kalau sheet CustomerPromoRules belum dibuat */
+const DEFAULT_CUSTOMER_RULES=[{CustomerName:'Petshop Indonesia',PromoType:'PASIR',MinQty:528,ForceTierQty:150,ProductDiscRate:0.05}];
 
 const COLS=[
 {key:'promo',label:'Promo',type:'none'},
@@ -232,17 +226,39 @@ const COLS=[
 {key:'totalPrice',label:'Total Price',type:'num'}
 ];
 
+const state={currentStep:1,fileData:{order:null,stockPT:null,stockPribadi:null},gsheetData:{productList:[],customerList:[],promoTier:[],discountRules:[],customerPromoRules:[]},customerRules:DEFAULT_CUSTOMER_RULES,selectedCustomer:null,processedItems:[],outputRows:[],filters:{},sorts:[]};
+
 const normalizeStr=s=>s==null?'':String(s).trim().toLowerCase();
 const normKey=s=>s==null?'':String(s).toLowerCase().replace(/\s+/g,' ').trim();
 const dateToExcelSerial=d=>Math.floor((d-new Date(1899,11,30))/(24*60*60*1000));
 const todaySerial=()=>dateToExcelSerial(new Date());
 const formatCurrency=n=>{if(isNaN(n)||n===null)return'Rp 0';return'Rp '+Math.round(n).toLocaleString('id-ID')};
+/* [FITUR] DISCOUNT PERSEN: 0.03 -> 3 ; 0.1 -> 10 */
+const fmtPct=d=>parseFloat((d*100).toFixed(2));
 function parsePrice(v){if(v==null||v==='')return 0;const n=parseFloat(String(v).trim().replace(/,/g,''));return isNaN(n)?0:n}
-function parseDiscount(v){if(!v||v==='')return 0;const n=parseFloat(String(v).trim().replace(/%/g,'').replace(/,/g,'.'));if(isNaN(n))return 0;return n>1?n/100:n}
-const currentCustomer=()=>state.gsheetData.customerList[state.selectedCustomer];
+function parseDiscount(v){if(!v&&v!==0)return 0;const n=parseFloat(String(v).trim().replace(/%/g,'').replace(/,/g,'.'));if(isNaN(n))return 0;return n>1?n/100:n}
 
+/* [FITUR] GROUP TIER: deteksi ukuran dari nama produk */
+function sizeGroupOf(name){
+const n=(name||'').toUpperCase();
+if(n.includes('10L'))return'10L';
+if(n.includes('20L'))return'20L';
+if(n.includes('100PCS'))return'100pcs';
+if(n.includes('150PCS'))return'150pcs';
+return null;
+}
+function computeGroupTotals(items){
+const t={};
+items.forEach(it=>{if(it&&it.found&&(it.promoType==='TIER'||it.promoType==='PASIR')){const g=sizeGroupOf(it.description);if(g){const k=it.promoType+'|'+g;t[k]=(t[k]||0)+it.qty;}}});
+return t;
+}
+function findCustomerRule(customer,promoType,groupTotal){
+if(!customer)return null;
+return state.customerRules.find(r=>normKey(r.CustomerName)===normKey(customer.CustomerName)&&(r.PromoType||'').trim().toUpperCase()===promoType&&groupTotal>=(parseFloat(r.MinQty)||0))||null;
+}
+/* [FITUR] BUY11GET1 */
 function calculatePromoSplit(qty,promoType){
-if(promoType==='PASIR'||promoType==='NONE'||promoType==='SBO')return{paidQty:qty,freeQty:0,type:'NONE'};
+if(promoType==='PASIR'||promoType==='NONE')return{paidQty:qty,freeQty:0,type:'NONE'};
 if(qty>=11&&qty%11===0)return{paidQty:qty,freeQty:qty/11,type:'PROMO11'};
 if(qty>=12){const f=Math.floor(qty/12);if(f>0)return{paidQty:qty-f,freeQty:f,type:'PROMO12'}}
 return{paidQty:qty,freeQty:0,type:'NONE'};
@@ -255,15 +271,15 @@ return calculatePromoSplit(item.qty,item.promoType);
 function goToStep(step){
 state.currentStep=step;
 document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-document.getElementById(`section-${step}`).classList.add('active');
+document.getElementById('section-'+step).classList.add('active');
 document.querySelectorAll('.step-item').forEach((el,i)=>{el.classList.remove('active','done');if(i+1<step)el.classList.add('done');if(i+1===step)el.classList.add('active')});
 if(step===3)renderReviewTable();
 }
 
 function handleFileUpload(input,type){
 const file=input.files[0];if(!file)return;
-const idMap={'order':'file-order-name','stockPT':'file-stock-pt-name','stockPribadi':'file-stock-pribadi-name'};
-const boxMap={'order':'upload-order','stockPT':'upload-stock-pt','stockPribadi':'upload-stock-pribadi'};
+const idMap={order:'file-order-name',stockPT:'file-stock-pt-name',stockPribadi:'file-stock-pribadi-name'};
+const boxMap={order:'upload-order',stockPT:'upload-stock-pt',stockPribadi:'upload-stock-pribadi'};
 document.getElementById(idMap[type]).textContent=file.name;
 document.getElementById(boxMap[type]).classList.add('uploaded');
 const r=new FileReader();
@@ -281,46 +297,79 @@ function checkUploadComplete(){document.getElementById('btn-process').disabled=!
 
 function parseCSVText(text){if(!text||text.trim()==='')return[];const rows=[];let cur=[],field='',inQ=false;for(let i=0;i<text.length;i++){const ch=text[i],nx=i+1<text.length?text[i+1]:'';if(inQ){if(ch==='"'&&nx==='"'){field+='"';i++}else if(ch==='"')inQ=false;else field+=ch}else{if(ch==='"')inQ=true;else if(ch===','){cur.push(field.trim());field=''}else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&nx==='\n')i++;cur.push(field.trim());field='';if(cur.some(f=>f!==''))rows.push(cur);cur=[]}else field+=ch}}cur.push(field.trim());if(cur.some(f=>f!==''))rows.push(cur);return rows}
 function csvToObjects(rows){if(!rows||rows.length<2)return[];const h=rows[0].map(x=>String(x==null?'':x).replace(/^\uFEFF/,'').trim());return rows.slice(1).map(r=>{const o={};h.forEach((k,i)=>{if(k)o[k]=r[i]!==undefined?r[i]:''});return o})}
-async function fetchGoogleSheets(){const sheets=['ProductList','CustomerList','PromoTier','ProductDiscountRules'];const res={};for(const s of sheets){try{const resp=await fetch(GSHEET_BASE+encodeURIComponent(s));if(!resp.ok){res[s]=[];continue}res[s]=csvToObjects(parseCSVText(await resp.text()))}catch(e){res[s]=[]}}return res}
+async function fetchGoogleSheets(){
+const sheets=['ProductList','CustomerList','PromoTier','ProductDiscountRules','CustomerPromoRules'];
+const res={};
+for(const s of sheets){
+try{const resp=await fetch(GSHEET_BASE+encodeURIComponent(s));if(!resp.ok){res[s]=[];continue}res[s]=csvToObjects(parseCSVText(await resp.text()))}catch(e){res[s]=[]}
+}
+return res;
+}
 
 function parseStockFile(data,target){
-const out={count:0,nameIdx:{},codeIdx:{}};if(!data||!Array.isArray(data))return out;
+const out={};if(!data||!Array.isArray(data))return out;
 let wh='',hIdx=-1,nIdx=1,qIdx=6;
 for(let i=0;i<Math.min(data.length,50);i++){const r=data[i];if(!r||!Array.isArray(r))continue;const low=r.map(c=>c==null?'':String(c).toLowerCase().trim());if(low.some(c=>c.includes('kode produk'))){hIdx=i;nIdx=low.findIndex(c=>c.includes('nama'));if(nIdx===-1)nIdx=1;qIdx=low.findIndex(c=>c.includes('akhir'));if(qIdx===-1)qIdx=6;break}}
 if(hIdx===-1)return out;
 for(let i=hIdx+1;i<data.length;i++){const r=data[i];if(!r||!Array.isArray(r))continue;
 const c0=r[0]==null?'':String(r[0]).trim();const c1=(nIdx<r.length&&r[nIdx]!=null)?String(r[nIdx]).trim():'';
 if(!c0&&!c1)continue;const j=r.map(c=>c==null?'':String(c).toLowerCase()).join('|');if(j.includes('subtotal')||j.includes('grand total'))continue;
-if(c0.toLowerCase().includes('olego mandiri')||c0.includes('---')||c0.toLowerCase().includes('pergerakan barang')||/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(c0))continue;
 if(c0!==''&&c1===''){wh=c0;continue}
-if(c0!==''&&c1!==''&&wh.toLowerCase().trim()===target.toLowerCase().trim()){const q=parseFloat((qIdx<r.length)?r[qIdx]:NaN)||0;const nk=normKey(c1),ck=normKey(c0);out.nameIdx[nk]=(out.nameIdx[nk]||0)+q;out.codeIdx[ck]=(out.codeIdx[ck]||0)+q;out.count++}}
+if(c0!==''&&c1!==''&&wh.toLowerCase().trim()===target.toLowerCase().trim()){const q=parseFloat((qIdx<r.length)?r[qIdx]:NaN)||0;const nk=normKey(c1);out[nk]=(out[nk]||0)+q}
+}
 return out;
 }
-function findStock(stock,product,item){if(!stock)return 0;const names=[product&&product.ProductName,product&&product.Description,item&&item.deskripsi];for(const k of names){if(!k)continue;const q=stock.nameIdx[normKey(k)];if(q!==undefined)return q}const codes=[product&&product.Kode,product&&product.ProductCode,item&&item.kode];for(const k of codes){if(!k)continue;const q=stock.codeIdx[normKey(k)];if(q!==undefined)return q}return 0}
+function findStock(stockMap,product){
+if(!product)return 0;
+return stockMap[normKey(product.ProductName)]||stockMap[normKey(product.Description)]||0;
+}
 
-function parseFormOrder(data){const items=[];if(!data||!Array.isArray(data))return items;let h=-1;for(let i=0;i<Math.min(data.length,30);i++){if(!data[i]||!Array.isArray(data[i]))continue;const j=data[i].map(c=>c==null?'':String(c).toLowerCase().trim()).join('|');if(j.includes('deskripsi')&&j.includes('qty')){h=i;break}}if(h===-1)return items;const hd=data[h].map(x=>x==null?'':String(x).toLowerCase().trim());const kI=hd.findIndex(x=>x.includes('kode')),dI=hd.findIndex(x=>x.includes('deskripsi')),qI=hd.findIndex(x=>x.includes('qty'));if(dI===-1||qI===-1)return items;data.slice(h+1).forEach(r=>{if(!r||!Array.isArray(r)||!r.length)return;const kode=kI>=0&&r[kI]!=null?String(r[kI]).trim():'';const desk=r[dI]!=null?String(r[dI]).trim():'';const qty=parseInt(r[qI])||0;if(normalizeStr(desk).includes('error')||normalizeStr(desk).includes('#n/a'))return;if(desk&&qty>0)items.push({kode,deskripsi:desk,qty})});return items}
+function parseFormOrder(data){
+const items=[];if(!data||!Array.isArray(data))return items;let h=-1;
+for(let i=0;i<Math.min(data.length,30);i++){if(!data[i]||!Array.isArray(data[i]))continue;const j=data[i].map(c=>c==null?'':String(c).toLowerCase().trim()).join('|');if(j.includes('deskripsi')&&j.includes('qty')){h=i;break}}
+if(h===-1)return items;
+const hd=data[h].map(x=>x==null?'':String(x).toLowerCase().trim());
+const kI=hd.findIndex(x=>x.includes('kode')),dI=hd.findIndex(x=>x.includes('deskripsi')),qI=hd.findIndex(x=>x.includes('qty'));
+if(dI===-1||qI===-1)return items;
+for(let i=h+1;i<data.length;i++){const r=data[i];if(!r||!Array.isArray(r)||!r.length)continue;
+const kode=kI>=0&&r[kI]!=null?String(r[kI]).trim():'';
+const desk=r[dI]!=null?String(r[dI]).trim():'';
+const qty=parseInt(r[qI])||0;
+if(normalizeStr(desk).includes('error')||normalizeStr(desk).includes('#n/a'))continue;
+if(desk&&qty>0)items.push({kode,deskripsi:desk,qty});
+}
+return items;
+}
 
 async function processData(){
 const alertEl=document.getElementById('upload-alert');
 alertEl.innerHTML='<div class="loading"><div class="spinner"></div> Memproses data...</div>';
 try{
 const sheets=await fetchGoogleSheets();
-state.gsheetData={productList:sheets.ProductList||[],customerList:sheets.CustomerList||[],promoTier:sheets.PromoTier||[],discountRules:sheets.ProductDiscountRules||[]};
+state.gsheetData={productList:sheets.ProductList||[],customerList:sheets.CustomerList||[],promoTier:sheets.PromoTier||[],discountRules:sheets.ProductDiscountRules||[],customerPromoRules:sheets.CustomerPromoRules||[]};
+state.customerRules=(state.gsheetData.customerPromoRules&&state.gsheetData.customerPromoRules.length)?state.gsheetData.customerPromoRules:DEFAULT_CUSTOMER_RULES;
 if(!state.gsheetData.productList.length){alertEl.innerHTML='<div class="alert alert-error">❌ Gagal mengambil ProductList.</div>';return}
 const sPT=parseStockFile(state.fileData.stockPT,'Unassigned');
 const sPr=parseStockFile(state.fileData.stockPribadi,'OMI/HO/WRHS');
-const orderItems=parseFormOrder(state.fileData.order);
-if(!orderItems.length){alertEl.innerHTML='<div class="alert alert-error">❌ Tidak ada item valid di Form Order.</div>';return}
-state.processedItems=orderItems.map(item=>{
-const product=state.gsheetData.productList.find(p=>normalizeStr(p.Kode)===normalizeStr(item.kode))||state.gsheetData.productList.find(p=>normalizeStr(p.Description)===normalizeStr(item.deskripsi));
-if(!product)return{...item,found:false,productName:item.deskripsi,productCode:item.kode,stockPT:0,stockPribadi:0,totalStock:0,promoEnabled:true};
-const a=findStock(sPT,product,item),b=findStock(sPr,product,item);
-const promoType=(product.PromoType||'').trim().toUpperCase();
-let hasTierWarning=false;
-if(promoType==='TIER'||promoType==='PASIR'){if(!state.gsheetData.promoTier.some(t=>normalizeStr(t.Deskripsi)===normalizeStr(product.Description)))hasTierWarning=true}
-return{...item,found:true,product,productName:product.ProductName||product.Description||item.deskripsi,productCode:product.ProductCode||product.Kode||item.kode,description:product.Description||item.deskripsi,unit:product.Unit||'Pcs',promoType,nettPriceOutput:(product.NettPriceOutput||'NettSellPricePPN').trim(),netSellPrice:parsePrice(product.NetSellPrice),netSellPricePPN:parsePrice(product.NetSellPricePPN),stockPT:a,stockPribadi:b,totalStock:a+b,promoEnabled:true,hasTierWarning};
+const rawItems=parseFormOrder(state.fileData.order);
+if(!rawItems.length){alertEl.innerHTML='<div class="alert alert-error">❌ Tidak ada item valid di Form Order.</div>';return}
+/* [FITUR] MERGE: nama sama -> qty dijumlah */
+const merged=new Map();
+rawItems.forEach(r=>{
+const product=state.gsheetData.productList.find(p=>normKey(p.Kode)===normKey(r.kode))||state.gsheetData.productList.find(p=>normKey(p.Description)===normKey(r.deskripsi));
+const key=product?('P|'+normKey(product.Description)):('N|'+normKey(r.deskripsi));
+if(merged.has(key)){merged.get(key).qty+=r.qty}else{merged.set(key,{kode:r.kode,deskripsi:r.deskripsi,qty:r.qty,product:product||null})}
 });
-alertEl.innerHTML=`<div class="alert alert-success">✅ ${orderItems.length} item diproses. Stock PT: ${Object.keys(sPT.nameIdx).length} | Stock Pribadi: ${Object.keys(sPr.nameIdx).length} produk.</div>`;
+state.processedItems=[...merged.values()].map(m=>{
+const p=m.product;
+if(!p)return{kode:m.kode,deskripsi:m.deskripsi,qty:m.qty,found:false,productName:m.deskripsi,productCode:m.kode,description:m.deskripsi,unit:'Pcs',promoType:'NONE',nettPriceOutput:'NettSellPricePPN',netSellPrice:0,netSellPricePPN:0,stockPT:0,stockPribadi:0,totalStock:0,promoEnabled:true,hasTierWarning:false};
+const a=findStock(sPT,p),b=findStock(sPr,p);
+const promoType=(p.PromoType||'').trim().toUpperCase();
+let hasTierWarning=false;
+if(promoType==='TIER'||promoType==='PASIR'){if(!state.gsheetData.promoTier.some(t=>normKey(t.Deskripsi)===normKey(p.Description)))hasTierWarning=true}
+return{kode:m.kode,deskripsi:m.deskripsi,qty:m.qty,found:true,productName:p.ProductName||p.Description||m.deskripsi,productCode:p.ProductCode||p.Kode||m.kode,description:p.Description||m.deskripsi,unit:p.Unit||'Pcs',promoType,nettPriceOutput:(p.NettPriceOutput||'NettSellPricePPN').trim(),netSellPrice:parsePrice(p.NetSellPrice),netSellPricePPN:parsePrice(p.NetSellPricePPN),stockPT:a,stockPribadi:b,totalStock:a+b,promoEnabled:true,hasTierWarning};
+});
+alertEl.innerHTML=`<div class="alert alert-success">✅ ${state.processedItems.length} item diproses (setelah merge).</div>`;
 setTimeout(()=>{goToStep(2);renderCustomerList()},800);
 }catch(err){alertEl.innerHTML=`<div class="alert alert-error">❌ Error: ${err.message}</div>`}
 }
@@ -328,28 +377,45 @@ setTimeout(()=>{goToStep(2);renderCustomerList()},800);
 function renderCustomerList(){
 const c=document.getElementById('customer-list');const list=state.gsheetData.customerList;
 if(!list.length){c.innerHTML='<div class="alert alert-warning">CustomerList kosong.</div>';return}
-c.innerHTML=list.map((x,i)=>`<div class="customer-item" data-idx="${i}"><div class="name">${x.CustomerName||'N/A'}</div><div class="meta">Area: ${x.Area||'-'} | Disc: ${parseDiscount(x.DiscountRate)*100}% | Due: ${x.DueDateDays||'30'} hari</div></div>`).join('');
+c.innerHTML=list.map((x,i)=>`<div class="customer-item" data-idx="${i}"><div class="name">${x.CustomerName||'N/A'}</div><div class="meta">Area: ${x.Area||'-'} | Disc: ${fmtPct(parseDiscount(x.DiscountRate))}% | Due: ${x.DueDateDays||'30'} hari</div></div>`).join('');
 c.querySelectorAll('.customer-item').forEach(el=>el.addEventListener('click',()=>{state.selectedCustomer=parseInt(el.dataset.idx);c.querySelectorAll('.customer-item').forEach(e=>e.classList.remove('selected'));el.classList.add('selected');document.getElementById('btn-to-step3').disabled=false}));
 }
 document.getElementById('customer-search').addEventListener('input',function(){const q=normalizeStr(this.value);document.querySelectorAll('.customer-item').forEach(el=>{const x=state.gsheetData.customerList[parseInt(el.dataset.idx)];if(!x)return;el.style.display=normalizeStr(x.CustomerName).includes(q)?'block':'none'})});
 
-function findTier(item){
-if(!(item.promoType==='TIER'||item.promoType==='PASIR'))return null;
-const tiers=state.gsheetData.promoTier.filter(t=>normalizeStr(t.Deskripsi)===normalizeStr(item.description||item.deskripsi));
-if(!tiers.length)return null;
-tiers.sort((a,b)=>(parseInt(b.TierQty)||0)-(parseInt(a.TierQty)||0));
-return tiers.find(t=>item.qty>=(parseInt(t.TierQty)||0))||null;
-}
-function calculatePrice(item,customer){
+/* [FITUR] GROUP TIER + PETSHOP RULE: harga per varian, tier dari total group */
+function calculatePrice(item,customer,groupTotals){
 if(!item.found)return{unitPrice:0};
-const area=(customer.Area||'').trim().toUpperCase();
-const sel=findTier(item);
-if(sel){let p;if(area.includes('JABODETABEK')){p=item.nettPriceOutput==='NettSellPrice'?parsePrice(sel.NettSellPriceJabodetabek):parsePrice(sel.NettSellPricePPNJabodetabek)}else{p=item.nettPriceOutput==='NettSellPrice'?parsePrice(sel.NettSellPriceJawaBali):parsePrice(sel.NettSellPricePPNJawaBali)}if(!isNaN(p)&&p>0)return{unitPrice:Math.round(p)}}
+const area=((customer&&customer.Area)||'').toUpperCase();
+if(item.promoType==='TIER'||item.promoType==='PASIR'){
+const g=sizeGroupOf(item.description);
+const key=item.promoType+'|'+g;
+const groupTotal=g?(groupTotals[key]||item.qty):item.qty;
+const tiers=state.gsheetData.promoTier.filter(t=>normKey(t.Deskripsi)===normKey(item.description));
+if(tiers.length){
+tiers.sort((a,b)=>(parseInt(b.TierQty)||0)-(parseInt(a.TierQty)||0));
+const rule=findCustomerRule(customer,item.promoType,groupTotal);
+let tierRow=null;
+if(rule&&rule.ForceTierQty)tierRow=tiers.find(t=>parseInt(t.TierQty)===parseInt(rule.ForceTierQty));
+if(!tierRow)tierRow=tiers.find(t=>groupTotal>=(parseInt(t.TierQty)||0));
+if(tierRow){
+let p;
+if(area.includes('JABODETABEK'))p=item.nettPriceOutput==='NettSellPrice'?parsePrice(tierRow.NettSellPriceJabodetabek):parsePrice(tierRow.NettSellPricePPNJabodetabek);
+else p=item.nettPriceOutput==='NettSellPrice'?parsePrice(tierRow.NettSellPriceJawaBali):parsePrice(tierRow.NettSellPricePPNJawaBali);
+if(!isNaN(p)&&p>0)return{unitPrice:Math.round(p)};
+}
+}
 return{unitPrice:Math.round(item.nettPriceOutput==='NettSellPrice'?item.netSellPrice:item.netSellPricePPN)};
 }
-function getProductDiscount(item){
+return{unitPrice:Math.round(item.nettPriceOutput==='NettSellPrice'?item.netSellPrice:item.netSellPricePPN)};
+}
+function getProductDiscount(item,customer,groupTotals){
 if(!item.promoEnabled)return 0;
-const rules=state.gsheetData.discountRules.filter(r=>normalizeStr(r.Deskripsi)===normalizeStr(item.description||item.deskripsi));
+const g=sizeGroupOf(item.description);
+const key=item.promoType+'|'+g;
+const groupTotal=g?(groupTotals[key]||item.qty):item.qty;
+const rule=findCustomerRule(customer,item.promoType,groupTotal);
+if(rule&&rule.ProductDiscRate)return parseDiscount(rule.ProductDiscRate);
+const rules=state.gsheetData.discountRules.filter(r=>normKey(r.Deskripsi)===normKey(item.description));
 if(!rules.length)return 0;
 rules.sort((a,b)=>(parseInt(b.MinQty)||0)-(parseInt(a.MinQty)||0));
 const m=rules.find(r=>item.qty>=(parseInt(r.MinQty)||0));
@@ -361,22 +427,26 @@ if(item.totalStock===0)return'Not Available';
 if(item.totalStock<item.qty)return'Low Stock';
 return'Available';
 }
-
-function getPromoInfo(item){
+function getPromoInfo(item,customer,groupTotals){
 if(!item.found||!item.promoEnabled)return'No Promo';
 const parts=[];
-if(item.promoType==='PASIR'){
-const t=findTier(item);
-if(t)parts.push(`Promo Tier ${parseInt(t.TierQty)} sak`);
-}else if(item.promoType==='TIER'){
-const t=findTier(item);
-if(t)parts.push('Promo Tissue');
+if(item.promoType==='PASIR'||item.promoType==='TIER'){
+const g=sizeGroupOf(item.description);
+const key=item.promoType+'|'+g;
+const groupTotal=g?(groupTotals[key]||item.qty):item.qty;
+const rule=findCustomerRule(customer,item.promoType,groupTotal);
+const tiers=state.gsheetData.promoTier.filter(t=>normKey(t.Deskripsi)===normKey(item.description)).sort((a,b)=>(parseInt(b.TierQty)||0)-(parseInt(a.TierQty)||0));
+let tierRow=null;
+if(rule&&rule.ForceTierQty)tierRow=tiers.find(t=>parseInt(t.TierQty)===parseInt(rule.ForceTierQty));
+if(!tierRow)tierRow=tiers.find(t=>groupTotal>=(parseInt(t.TierQty)||0));
+if(tierRow)parts.push((item.promoType==='PASIR'?'Promo Tier ':'Promo Tissue ')+tierRow.TierQty);
+else if(item.promoType==='TIER')parts.push('Promo Tissue');
 }
-const disc=getProductDiscount(item);
-if(disc>0)parts.push(`Promo ${parseFloat((disc*100).toFixed(2))}%`);
+const disc=getProductDiscount(item,customer,groupTotals);
+if(disc>0)parts.push('Promo '+fmtPct(disc)+'%');
 if(item.promoType!=='PASIR'&&item.promoType!=='NONE'){
 const s=getSplit(item);
-if(s.freeQty>0)parts.push(`Buy11Get1 (Bayar ${s.paidQty}, Free ${s.freeQty})`);
+if(s.freeQty>0)parts.push('Buy11Get1 (Bayar '+s.paidQty+', Free '+s.freeQty+')');
 }
 return parts.length?parts.join(' dan '):'No Promo';
 }
@@ -388,12 +458,6 @@ thead.innerHTML=`<tr>${COLS.map(c=>c.type==='none'?`<th>${c.label}</th>`:`<th cl
 thead.querySelectorAll('.th-sort').forEach(th=>th.addEventListener('click',onSortClick));
 let timer=null;
 thead.querySelectorAll('.col-filter').forEach(inp=>inp.addEventListener('input',e=>{state.filters[e.target.dataset.key]=e.target.value;clearTimeout(timer);timer=setTimeout(()=>renderReviewTable(),350)}));
-// Adjust filter row top dynamically based on actual header height
-const headerRow=thead.querySelector('tr:first-child');
-if(headerRow){
-const h=headerRow.offsetHeight;
-thead.querySelectorAll('.filter-row th').forEach(th=>{th.style.top=h+'px'});
-}
 }
 function onSortClick(e){
 const key=e.currentTarget.dataset.key;
@@ -423,9 +487,10 @@ default:return'';
 }
 
 function renderReviewTable(){
-const customer=currentCustomer();if(!customer)return;
-document.getElementById('review-customer-info').textContent=`Customer: ${customer.CustomerName} | Area: ${customer.Area} | Discount: ${parseDiscount(customer.DiscountRate)*100}%`;
-let rows=state.processedItems.map((item,idx)=>({item,idx,d:derive(item,customer)}));
+const customer=state.gsheetData.customerList[state.selectedCustomer];if(!customer)return;
+const groupTotals=computeGroupTotals(state.processedItems);
+document.getElementById('review-customer-info').textContent=`Customer: ${customer.CustomerName} | Area: ${customer.Area} | Discount: ${fmtPct(parseDiscount(customer.DiscountRate))}%`;
+let rows=state.processedItems.map((item,idx)=>({item,idx,d:derive(item,customer,groupTotals)}));
 let avail=0,low=0,notAvail=0,notFound=0;
 rows.forEach(r=>{if(r.d.status==='Available')avail++;else if(r.d.status==='Low Stock')low++;else if(r.d.status==='Not Available')notAvail++;else notFound++});
 const af=Object.entries(state.filters).filter(([k,v])=>v&&v.trim()!=='');
@@ -459,11 +524,11 @@ document.getElementById('review-summary').innerHTML=`
 tbody.querySelectorAll('.qty-input').forEach(inp=>inp.addEventListener('change',function(){state.processedItems[this.dataset.idx].qty=parseInt(this.value)||0;renderReviewTable()}));
 tbody.querySelectorAll('.toggle').forEach(tog=>tog.addEventListener('click',function(){const i=this.dataset.toggle;state.processedItems[i].promoEnabled=!state.processedItems[i].promoEnabled;renderReviewTable()}));
 }
-function derive(item,customer){
+function derive(item,customer,groupTotals){
 const status=getStatus(item);
-const unitPrice=calculatePrice(item,customer).unitPrice;
+const unitPrice=calculatePrice(item,customer,groupTotals).unitPrice;
 const s=getSplit(item);
-return{status,unitPrice,paidQty:s.paidQty,totalPrice:s.paidQty*unitPrice,promoInfo:getPromoInfo(item)};
+return{status,unitPrice,paidQty:s.paidQty,totalPrice:s.paidQty*unitPrice,promoInfo:getPromoInfo(item,customer,groupTotals)};
 }
 
 function generatePreview(){
@@ -471,27 +536,32 @@ const on=document.getElementById('order-number'),oe=document.getElementById('ord
 const orderNumber=on.value.trim();
 if(!orderNumber){on.classList.add('input-error');oe.style.display='block';on.focus();return}
 on.classList.remove('input-error');oe.style.display='none';
-const customer=currentCustomer();
+const customer=state.gsheetData.customerList[state.selectedCustomer];
+const groupTotals=computeGroupTotals(state.processedItems);
 const orderDateSerial=todaySerial();
 const dueDateSerial=orderDateSerial+(parseInt(customer.DueDateDays)||30);
 const sd=document.getElementById('shipping-date').value;
 const shippingDateSerial=sd?dateToExcelSerial(new Date(sd)):'';
 const customerDiscount=parseDiscount(customer.DiscountRate);
-let isFirstRow=true;const rows=[];
+const email=(customer.Email||'').trim();
+const rows=[];
 state.processedItems.forEach(item=>{
 if(!item.found||item.qty<=0)return;
+/* [FITUR] NOT AVAIL EXCLUDE: stock 0 tidak masuk output */
 if(item.totalStock===0)return;
-const priceInfo=calculatePrice(item,customer);
-const productDiscount=getProductDiscount(item);
+const priceInfo=calculatePrice(item,customer,groupTotals);
+const productDiscount=getProductDiscount(item,customer,groupTotals);
 const s=getSplit(item);
-rows.push({customer:customer.CustomerName,email:FIXED_EMAIL,billingAddress:customer.BillingAddress||'',shippingAddress:customer.ShippingAddress||'',orderDate:orderDateSerial,dueDate:dueDateSerial,shippingDate:shippingDateSerial,orderNumber,message:FIXED_MESSAGE,productName:item.productName,description:item.description||item.deskripsi,quantity:s.paidQty,unit:item.unit||'Pcs',unitPrice:priceInfo.unitPrice,productDiscountRate:productDiscount||'',orderDiscount:customerDiscount||'',taxName:isFirstRow?'VAT -':''});
-isFirstRow=false;
-if(s.freeQty>0){rows.push({customer:customer.CustomerName,email:FIXED_EMAIL,billingAddress:customer.BillingAddress||'',shippingAddress:customer.ShippingAddress||'',orderDate:orderDateSerial,dueDate:dueDateSerial,shippingDate:shippingDateSerial,orderNumber,message:FIXED_MESSAGE,productName:item.productName,description:item.description||item.deskripsi,quantity:s.freeQty,unit:item.unit||'Pcs',unitPrice:0,productDiscountRate:productDiscount||'',orderDiscount:customerDiscount||'',taxName:''})}
+/* [FITUR] DISCOUNT PERSEN + [FITUR] TAXNAME SEMUA ROW */
+rows.push({customer:customer.CustomerName,email,billingAddress:customer.BillingAddress||'',shippingAddress:customer.ShippingAddress||'',orderDate:orderDateSerial,dueDate:dueDateSerial,shippingDate:shippingDateSerial,orderNumber,message:FIXED_MESSAGE,productName:item.productName,description:item.description,quantity:s.paidQty,unit:item.unit,unitPrice:priceInfo.unitPrice,productDiscountRate:productDiscount?fmtPct(productDiscount):'',orderDiscount:customerDiscount?fmtPct(customerDiscount)+'%':'',taxName:'VAT -'});
+if(s.freeQty>0){
+rows.push({customer:customer.CustomerName,email,billingAddress:customer.BillingAddress||'',shippingAddress:customer.ShippingAddress||'',orderDate:orderDateSerial,dueDate:dueDateSerial,shippingDate:shippingDateSerial,orderNumber,message:FIXED_MESSAGE,productName:item.productName,description:item.description,quantity:s.freeQty,unit:item.unit,unitPrice:0,productDiscountRate:productDiscount?fmtPct(productDiscount):'',orderDiscount:customerDiscount?fmtPct(customerDiscount)+'%':'',taxName:'VAT -'});
+}
 });
 state.outputRows=rows;renderPreview(rows,customer);goToStep(4);
 }
 function renderPreview(rows,customer){
-document.getElementById('preview-table-body').innerHTML=rows.map((r,i)=>`<tr class="${r.unitPrice===0?'row-free':''}"><td>${i+1}</td><td>${r.productName}</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${r.description}</td><td>${r.quantity}</td><td>${r.unit}</td><td style="font-weight:600">${r.unitPrice===0?'FREE (0)':formatCurrency(r.unitPrice)}</td><td>${r.productDiscountRate||'-'}</td><td>${r.orderDiscount||'-'}</td><td>${r.taxName||'-'}</td></tr>`).join('');
+document.getElementById('preview-table-body').innerHTML=rows.map((r,i)=>`<tr class="${r.unitPrice===0?'row-free':''}"><td>${i+1}</td><td>${r.productName}</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${r.description}</td><td>${r.quantity}</td><td>${r.unit}</td><td style="font-weight:600">${r.unitPrice===0?'FREE (0)':formatCurrency(r.unitPrice)}</td><td>${r.productDiscountRate?r.productDiscountRate+'%':'-'}</td><td>${r.orderDiscount||'-'}</td><td>${r.taxName||'-'}</td></tr>`).join('');
 const tq=rows.reduce((s,r)=>s+(parseInt(r.quantity)||0),0);
 const tv=rows.reduce((s,r)=>s+((parseInt(r.quantity)||0)*(parseFloat(r.unitPrice)||0)),0);
 document.getElementById('preview-summary').innerHTML=`
@@ -503,11 +573,12 @@ document.getElementById('preview-summary').innerHTML=`
 
 function downloadExcel(){
 const headers=['*Customer','Email','BillingAddress','ShippingAddress','*OrderDate','*DueDate','ShippingDate','ShipVia','TrackingNo','CustomerRefNo','*OrderNumber','Message','Memo','*ProductName','Description','*Quantity','*Unit','*UnitPrice','ProductDiscountRate(%)','OrderDiscount(value or %)','TaxName','TaxRate(%)','ShippingFee','#paid?(yes/no)','#PaymentMethod','#PaidToAccountCode','Tags (use ; to separate tags)','WarehouseName','#currency code(example: IDR,USD,CAD)','Custom_Fields_[Nama_Fields]'];
-const data=[headers,...state.outputRows.map(r=>[r.customer,r.email,r.billingAddress,r.shippingAddress,r.orderDate,r.dueDate,r.shippingDate,'','','',r.orderNumber,r.message,'',r.productName,r.description,r.quantity,r.unit,r.unitPrice,r.productDiscountRate,r.orderDiscount,r.taxName,'','','','','','','','IDR',''])];
+const data=[headers,...state.outputRows.map(r=>[r.customer,r.email,r.billingAddress,r.shippingAddress,r.orderDate,r.dueDate,r.shippingDate,'','','',r.orderNumber,r.message,'',r.productName,r.description,r.quantity,r.unit,r.unitPrice,r.productDiscountRate,r.orderDiscount,r.taxName,'','','','','','','','','IDR',''])];
 const ws=XLSX.utils.aoa_to_sheet(data);
 ws['!cols']=[{wch:25},{wch:50},{wch:40},{wch:40},{wch:12},{wch:12},{wch:12},{wch:8},{wch:10},{wch:12},{wch:12},{wch:50},{wch:8},{wch:40},{wch:40},{wch:10},{wch:8},{wch:12},{wch:12},{wch:12},{wch:8},{wch:8},{wch:10},{wch:8},{wch:12},{wch:12},{wch:15},{wch:12},{wch:10},{wch:15}];
 const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Sheet1');
-const c=currentCustomer();const name=(c.CustomerName||'Customer').replace(/[^a-zA-Z0-9]/g,'-');
+const c=state.gsheetData.customerList[state.selectedCustomer];
+const name=(c.CustomerName||'Customer').replace(/[^a-zA-Z0-9]/g,'-');
 XLSX.writeFile(wb,`SalesOrder_${name}_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
