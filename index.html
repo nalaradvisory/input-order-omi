@@ -49,17 +49,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .btn-secondary{background:var(--grey-soft);color:var(--ink);border:1px solid var(--line)}
 .btn-secondary:hover{background:var(--line-soft)}
 .btn-sm{padding:6px 12px;font-size:12px}
-/* [FIX FREEZE] overflow cuma di .table-scroll, wrapper tanpa overflow biar sticky jalan */
-.table-wrapper{border-radius:var(--radius);border:1px solid var(--line)}
-.table-scroll{max-height:520px;overflow:auto;position:relative}
+.table-wrapper{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--line)}
 table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
-th{background:var(--bg);padding:10px 12px;text-align:left;font-weight:600;color:var(--ink-2);white-space:nowrap;position:sticky;top:0;z-index:6;box-shadow:0 1px 0 var(--line)}
-td{padding:10px 12px;border-bottom:1px solid var(--line-soft);vertical-align:middle;color:var(--ink)}
+th{background:var(--bg);padding:10px 12px;text-align:left;font-weight:600;color:var(--ink-2);white-space:nowrap;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;box-shadow:0 1px 0 var(--line)}
+td{padding:10px 14px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
 tr:hover td{background:var(--grey-soft)}
 tr.row-danger td{background:var(--danger-light)}
 tr.row-warning td{background:var(--amber-soft)}
 tr.row-free td{background:var(--teal-soft);font-style:italic}
-.filter-row th{top:41px;z-index:5;padding:6px 8px}
 .badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600}
 .badge-success{background:var(--success-light);color:var(--success)}
 .badge-danger{background:var(--danger-light);color:var(--danger)}
@@ -92,6 +89,7 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 .qty-grey{color:var(--ink-3)!important}
 .flex{display:flex}.flex-between{display:flex;justify-content:space-between;align-items:center}
 .gap-2{gap:8px}.mt-3{margin-top:12px}.mt-4{margin-top:16px}.mb-4{margin-bottom:16px}
+.table-scroll{max-height:520px;overflow-y:auto;position:relative}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:768px){.grid-2{grid-template-columns:1fr}}
 .customer-item{padding:12px 16px;border:1px solid var(--line);border-radius:var(--radius);margin-bottom:8px;cursor:pointer;transition:all .2s;background:var(--surface)}
@@ -102,6 +100,7 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 .th-sort{cursor:pointer;user-select:none}
 .th-sort:hover{color:var(--teal)}
 .sort-ind{margin-left:5px;font-size:10px;color:var(--teal);font-weight:700}
+.filter-row th{top:41px;z-index:4;padding:6px 8px}
 .col-filter{width:100%;min-width:70px;padding:5px 8px;font-size:12px;background:var(--surface);border:1px solid var(--line);border-radius:6px;color:var(--ink);outline:none}
 .col-filter:focus{border-color:var(--teal)}
 .hint{font-size:11px;color:var(--ink-3);margin-bottom:8px}
@@ -127,9 +126,9 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 <div class="card-title">Upload Data</div>
 <div class="card-desc">Upload 3 file Excel. Master data otomatis dibaca dari Google Sheets.</div>
 <div class="upload-grid">
-<div class="upload-box" id="upload-order"><span class="upload-badge">Wajib</span><div class="upload-icon">📋</div><div class="upload-label">Form Order Customer</div><div class="upload-hint">Pilih file...</div><div class="upload-file" id="file-order-name"></div><input type="file" id="file-order" accept=".xlsx,.xls" data-type="order" class="file-input"></div>
-<div class="upload-box" id="upload-stock-pt"><span class="upload-badge">Wajib</span><div class="upload-icon">🏢</div><div class="upload-label">Stock PT</div><div class="upload-hint">Pilih file...</div><div class="upload-file" id="file-stock-pt-name"></div><input type="file" id="file-stock-pt" accept=".xlsx,.xls" data-type="stockPT" class="file-input"></div>
-<div class="upload-box" id="upload-stock-pribadi"><span class="upload-badge">Wajib</span><div class="upload-icon">🏠</div><div class="upload-label">Stock Pribadi</div><div class="upload-hint">Pilih file...</div><div class="upload-file" id="file-stock-pribadi-name"></div><input type="file" id="file-stock-pribadi" accept=".xlsx,.xls" data-type="stockPribadi" class="file-input"></div>
+<div class="upload-box" id="upload-order"><span class="upload-badge">Wajib</span><div class="upload-icon">📋</div><div class="upload-label">Form Order Customer</div><div class="upload-hint">Kategori | Kode | Deskripsi | Qty | Total</div><div class="upload-file" id="file-order-name"></div><input type="file" id="file-order" accept=".xlsx,.xls" data-type="order" class="file-input"></div>
+<div class="upload-box" id="upload-stock-pt"><span class="upload-badge">Wajib</span><div class="upload-icon">🏢</div><div class="upload-label">Stock PT</div><div class="upload-hint">Laporan Pergerakan Barang Gudang (Unassigned)</div><div class="upload-file" id="file-stock-pt-name"></div><input type="file" id="file-stock-pt" accept=".xlsx,.xls" data-type="stockPT" class="file-input"></div>
+<div class="upload-box" id="upload-stock-pribadi"><span class="upload-badge">Wajib</span><div class="upload-icon">🏠</div><div class="upload-label">Stock Pribadi</div><div class="upload-hint">Laporan Pergerakan Barang Gudang (OMI/HO/WRHS)</div><div class="upload-file" id="file-stock-pribadi-name"></div><input type="file" id="file-stock-pribadi" accept=".xlsx,.xls" data-type="stockPribadi" class="file-input"></div>
 </div>
 <div id="upload-alert" class="mt-3"></div>
 <div class="mt-4"><button class="btn btn-primary" id="btn-process" disabled>Proses & Lanjut →</button></div>
@@ -208,50 +207,26 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 document.addEventListener('DOMContentLoaded',()=>{
 const GSHEET_ID='1qcYg15I3Peg_oNhdCXNciEnG82ltj22jtoA4jz6d4pE';
 const GSHEET_BASE=`https://docs.google.com/spreadsheets/d/${GSHEET_ID}/gviz/tq?tqx=out:csv&sheet=`;
+const FIXED_EMAIL="agrindoconsultant1@gmail.com, ghena.fakturpajak@gmail.com, acc.omi001@gmail.com";
 const FIXED_MESSAGE="- Barang yang sudah dibeli tidak dapat dikembalikan atau ditukar.\n\n- Harap mencantumkan Nomor Faktur di kolom berita untuk konfirmasi pembayaran.\n\n- Payment Rekening BCA : \n5810550718 A/N PT.OLEGO MANDIRI INDONESIA.";
-const DEFAULT_CUSTOMER_RULES=[{CustomerName:'Petshop Indonesia',PromoType:'PASIR',MinQty:528,ForceTierQty:150,ProductDiscRate:0.05}];
 
-const COLS=[
-{key:'promo',label:'Promo',type:'none'},
-{key:'productCode',label:'Kode',type:'text'},
-{key:'productName',label:'Product Name',type:'text'},
-{key:'qty',label:'Order Qty',type:'num'},
-{key:'stockPT',label:'Stock PT',type:'num'},
-{key:'stockPribadi',label:'Stock Pribadi',type:'num'},
-{key:'totalStock',label:'Total Stock',type:'num'},
-{key:'status',label:'Status',type:'text'},
-{key:'promoInfo',label:'Promo Info',type:'text'},
-{key:'unitPrice',label:'Unit Price',type:'num'},
-{key:'totalPrice',label:'Total Price',type:'num'}
-];
-
-const state={currentStep:1,fileData:{order:null,stockPT:null,stockPribadi:null},gsheetData:{productList:[],customerList:[],promoTier:[],discountRules:[],customerPromoRules:[]},customerRules:DEFAULT_CUSTOMER_RULES,selectedCustomer:null,processedItems:[],outputRows:[],filters:{},sorts:[]};
+const state={currentStep:1,fileData:{order:null,stockPT:null,stockPribadi:null},gsheetData:{productList:[],customerList:[],promoTier:[],discountRules:[]},selectedCustomer:null,processedItems:[],outputRows:[],filters:{},sorts:[]};
 
 const normalizeStr=s=>s==null?'':String(s).trim().toLowerCase();
 const normKey=s=>s==null?'':String(s).toLowerCase().replace(/\s+/g,' ').trim();
 const dateToExcelSerial=d=>Math.floor((d-new Date(1899,11,30))/(24*60*60*1000));
 const todaySerial=()=>dateToExcelSerial(new Date());
 const formatCurrency=n=>{if(isNaN(n)||n===null)return'Rp 0';return'Rp '+Math.round(n).toLocaleString('id-ID')};
-const fmtPct=d=>parseFloat((d*100).toFixed(2));
 function parsePrice(v){if(v==null||v==='')return 0;const n=parseFloat(String(v).trim().replace(/,/g,''));return isNaN(n)?0:n}
-function parseDiscount(v){if(!v&&v!==0)return 0;const n=parseFloat(String(v).trim().replace(/%/g,'').replace(/,/g,'.'));if(isNaN(n))return 0;return n>1?n/100:n}
+function parseDiscount(v){if(!v&&v!==0)return 0;let s=String(v).trim().replace(/%/g,'').replace(/,/g,'.');const n=parseFloat(s);if(isNaN(n))return 0;return n>1?n/100:n}
 
+// [FIX] SBO dikecualikan dari Buy11Get1 (11+1). SBO cuma dapet diskon dari ProductDiscountRules.
 function calculatePromoSplit(qty,promoType){
-if(promoType==='PASIR'||promoType==='NONE')return{paidQty:qty,freeQty:0,type:'NONE'};
+if(promoType==='PASIR'||promoType==='NONE'||promoType==='SBO')return{paidQty:qty,freeQty:0,type:'NONE'};
 if(qty>=11&&qty%11===0)return{paidQty:qty,freeQty:qty/11,type:'PROMO11'};
 if(qty>=12){const f=Math.floor(qty/12);if(f>0)return{paidQty:qty-f,freeQty:f,type:'PROMO12'}}
 return{paidQty:qty,freeQty:0,type:'NONE'};
 }
-
-// [FIX FREEZE] ukur tinggi row judul, set top filter row biar nempel pas
-function fixStickyTops(){
-document.querySelectorAll('table thead').forEach(thead=>{
-const first=thead.querySelector('tr');
-const fr=thead.querySelector('.filter-row');
-if(first&&fr){const h=first.offsetHeight;if(h>0)fr.querySelectorAll('th').forEach(th=>{th.style.top=h+'px'});}
-});
-}
-window.addEventListener('resize',fixStickyTops);
 
 function goToStep(step){
 state.currentStep=step;
@@ -259,7 +234,6 @@ document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
 document.getElementById('section-'+step).classList.add('active');
 document.querySelectorAll('.step-item').forEach((el,i)=>{el.classList.remove('active','done');if(i+1<step)el.classList.add('done');if(i+1===step)el.classList.add('active')});
 if(step===3)renderReviewTable();
-fixStickyTops();
 }
 
 function handleFileUpload(input,type){
@@ -284,7 +258,7 @@ function checkUploadComplete(){document.getElementById('btn-process').disabled=!
 function parseCSVText(text){if(!text||text.trim()==='')return[];const rows=[];let cur=[],field='',inQ=false;for(let i=0;i<text.length;i++){const ch=text[i],nx=i+1<text.length?text[i+1]:'';if(inQ){if(ch==='"'&&nx==='"'){field+='"';i++}else if(ch==='"')inQ=false;else field+=ch}else{if(ch==='"')inQ=true;else if(ch===','){cur.push(field.trim());field=''}else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&nx==='\n')i++;cur.push(field.trim());field='';if(cur.some(f=>f!==''))rows.push(cur);cur=[]}else field+=ch}}cur.push(field.trim());if(cur.some(f=>f!==''))rows.push(cur);return rows}
 function csvToObjects(rows){if(!rows||rows.length<2)return[];const h=rows[0].map(x=>String(x==null?'':x).replace(/^\uFEFF/,'').trim());return rows.slice(1).map(r=>{const o={};h.forEach((k,i)=>{if(k)o[k]=r[i]!==undefined?r[i]:''});return o})}
 async function fetchGoogleSheets(){
-const sheets=['ProductList','CustomerList','PromoTier','ProductDiscountRules','CustomerPromoRules'];
+const sheets=['ProductList','CustomerList','PromoTier','ProductDiscountRules'];
 const res={};
 for(const s of sheets){
 try{const resp=await fetch(GSHEET_BASE+encodeURIComponent(s));if(!resp.ok){res[s]=[];continue}res[s]=csvToObjects(parseCSVText(await resp.text()))}catch(e){res[s]=[]}
@@ -292,22 +266,40 @@ try{const resp=await fetch(GSHEET_BASE+encodeURIComponent(s));if(!resp.ok){res[s
 return res;
 }
 
+// [FIX] Stock disimpan by-Name DAN by-Code, biar typo nama (2700MmAh vs 2700mAh) tetap ketemu lewat Kode
 function parseStockFile(data,target){
-const out={};if(!data||!Array.isArray(data))return out;
+const byName={},byCode={};
+if(!data||!Array.isArray(data))return{byName,byCode};
 let wh='',hIdx=-1,nIdx=1,qIdx=6;
 for(let i=0;i<Math.min(data.length,50);i++){const r=data[i];if(!r||!Array.isArray(r))continue;const low=r.map(c=>c==null?'':String(c).toLowerCase().trim());if(low.some(c=>c.includes('kode produk'))){hIdx=i;nIdx=low.findIndex(c=>c.includes('nama'));if(nIdx===-1)nIdx=1;qIdx=low.findIndex(c=>c.includes('akhir'));if(qIdx===-1)qIdx=6;break}}
-if(hIdx===-1)return out;
+if(hIdx===-1)return{byName,byCode};
 for(let i=hIdx+1;i<data.length;i++){const r=data[i];if(!r||!Array.isArray(r))continue;
 const c0=r[0]==null?'':String(r[0]).trim();const c1=(nIdx<r.length&&r[nIdx]!=null)?String(r[nIdx]).trim():'';
-if(!c0&&!c1)continue;const j=r.map(c=>c==null?'':String(c).toLowerCase()).join('|');if(j.includes('subtotal')||j.includes('grand total'))continue;
+if(!c0&&!c1)continue;
+const rowStr=r.map(c=>c==null?'':String(c).toLowerCase()).join('|');if(rowStr.includes('subtotal')||rowStr.includes('grand total'))continue;
 if(c0!==''&&c1===''){wh=c0;continue}
-if(c0!==''&&c1!==''&&wh.toLowerCase().trim()===target.toLowerCase().trim()){const q=parseFloat((qIdx<r.length)?r[qIdx]:NaN)||0;const nk=normKey(c1);out[nk]=(out[nk]||0)+q}
+if(c0!==''&&c1!==''&&wh.toLowerCase().trim()===target.toLowerCase().trim()){
+const qty=parseFloat(r[qIdx])||0;
+byName[c1]=(byName[c1]||0)+qty;
+if(c0)byCode[normKey(c0)]=(byCode[normKey(c0)]||0)+qty;
 }
-return out;
 }
-function findStock(stockMap,product){
-if(!product)return 0;
-return stockMap[normKey(product.ProductName)]||stockMap[normKey(product.Description)]||0;
+return{byName,byCode};
+}
+function findStock(stock,product){
+if(!stock||!product)return 0;
+const tryNames=[product.ProductName,product.Description];
+for(const k of tryNames){
+if(!k)continue;
+if(stock.byName[k]!=null)return stock.byName[k];
+const nk=normKey(k);
+for(const bk in stock.byName){if(normKey(bk)===nk)return stock.byName[bk]}
+}
+if(product.Kode){
+const ck=normKey(product.Kode);
+if(stock.byCode[ck]!=null)return stock.byCode[ck];
+}
+return 0;
 }
 
 function parseFormOrder(data){
@@ -319,7 +311,7 @@ const kI=hd.findIndex(x=>x.includes('kode')),dI=hd.findIndex(x=>x.includes('desk
 if(dI===-1||qI===-1)return items;
 for(let i=h+1;i<data.length;i++){const r=data[i];if(!r||!Array.isArray(r)||!r.length)continue;
 const kode=kI>=0&&r[kI]!=null?String(r[kI]).trim():'';
-const desk=r[dI]!=null?String(r[dI]).trim():'';
+const desk=dI>=0&&r[dI]!=null?String(r[dI]).trim():'';
 const qty=parseInt(r[qI])||0;
 if(normalizeStr(desk).includes('error')||normalizeStr(desk).includes('#n/a'))continue;
 if(desk&&qty>0)items.push({kode,deskripsi:desk,qty});
@@ -332,16 +324,15 @@ const alertEl=document.getElementById('upload-alert');
 alertEl.innerHTML='<div class="loading"><div class="spinner"></div> Memproses data...</div>';
 try{
 const sheets=await fetchGoogleSheets();
-state.gsheetData={productList:sheets.ProductList||[],customerList:sheets.CustomerList||[],promoTier:sheets.PromoTier||[],discountRules:sheets.ProductDiscountRules||[],customerPromoRules:sheets.CustomerPromoRules||[]};
-state.customerRules=(state.gsheetData.customerPromoRules&&state.gsheetData.customerPromoRules.length)?state.gsheetData.customerPromoRules:DEFAULT_CUSTOMER_RULES;
+state.gsheetData={productList:sheets.ProductList||[],customerList:sheets.CustomerList||[],promoTier:sheets.PromoTier||[],discountRules:sheets.ProductDiscountRules||[]};
 if(!state.gsheetData.productList.length){alertEl.innerHTML='<div class="alert alert-error">❌ Gagal mengambil ProductList.</div>';return}
 const sPT=parseStockFile(state.fileData.stockPT,'Unassigned');
 const sPr=parseStockFile(state.fileData.stockPribadi,'OMI/HO/WRHS');
-const rawItems=parseFormOrder(state.fileData.order);
-if(!rawItems.length){alertEl.innerHTML='<div class="alert alert-error">❌ Tidak ada item valid di Form Order.</div>';return}
+const orderItems=parseFormOrder(state.fileData.order);
+if(!orderItems.length){alertEl.innerHTML='<div class="alert alert-error">❌ Tidak ada item valid di Form Order.</div>';return}
 const merged=new Map();
-rawItems.forEach(r=>{
-const product=state.gsheetData.productList.find(p=>normKey(p.Kode)===normKey(r.kode))||state.gsheetData.productList.find(p=>normKey(p.Description)===normKey(r.deskripsi));
+orderItems.forEach(r=>{
+const product=state.gsheetData.productList.find(p=>normKey(p.Description)===normKey(r.deskripsi))||state.gsheetData.productList.find(p=>normKey(p.Kode)===normKey(r.kode));
 const key=product?('P|'+normKey(product.Description)):('N|'+normKey(r.deskripsi));
 if(merged.has(key)){merged.get(key).qty+=r.qty}else{merged.set(key,{kode:r.kode,deskripsi:r.deskripsi,qty:r.qty,product:product||null})}
 });
@@ -354,7 +345,7 @@ let hasTierWarning=false;
 if(promoType==='TIER'||promoType==='PASIR'){if(!state.gsheetData.promoTier.some(t=>normKey(t.Deskripsi)===normKey(p.Description)))hasTierWarning=true}
 return{kode:m.kode,deskripsi:m.deskripsi,qty:m.qty,found:true,productName:p.ProductName||p.Description||m.deskripsi,productCode:p.ProductCode||p.Kode||m.kode,description:p.Description||m.deskripsi,unit:p.Unit||'Pcs',promoType,nettPriceOutput:(p.NettPriceOutput||'NettSellPricePPN').trim(),netSellPrice:parsePrice(p.NetSellPrice),netSellPricePPN:parsePrice(p.NetSellPricePPN),stockPT:a,stockPribadi:b,totalStock:a+b,promoEnabled:true,hasTierWarning};
 });
-alertEl.innerHTML=`<div class="alert alert-success">✅ ${state.processedItems.length} item diproses (setelah merge).</div>`;
+alertEl.innerHTML=`<div class="alert alert-success">✅ ${orderItems.length} item diproses. Lanjut pilih customer.</div>`;
 setTimeout(()=>{goToStep(2);renderCustomerList()},800);
 }catch(err){alertEl.innerHTML=`<div class="alert alert-error">❌ Error: ${err.message}</div>`}
 }
@@ -362,92 +353,66 @@ setTimeout(()=>{goToStep(2);renderCustomerList()},800);
 function renderCustomerList(){
 const c=document.getElementById('customer-list');const list=state.gsheetData.customerList;
 if(!list.length){c.innerHTML='<div class="alert alert-warning">CustomerList kosong.</div>';return}
-c.innerHTML=list.map((x,i)=>`<div class="customer-item" data-idx="${i}"><div class="name">${x.CustomerName||'N/A'}</div><div class="meta">Area: ${x.Area||'-'} | Disc: ${fmtPct(parseDiscount(x.DiscountRate))}% | Due: ${x.DueDateDays||'30'} hari | ${x.Email||''}</div></div>`).join('');
+c.innerHTML=list.map((x,i)=>`<div class="customer-item" data-idx="${i}"><div class="name">${x.CustomerName||'N/A'}</div><div class="meta">Area: ${x.Area||'-'} | Disc: ${parseDiscount(x.DiscountRate)*100}% | Due: ${x.DueDateDays||'30'} hari</div></div>`).join('');
 c.querySelectorAll('.customer-item').forEach(el=>el.addEventListener('click',()=>{state.selectedCustomer=parseInt(el.dataset.idx);c.querySelectorAll('.customer-item').forEach(e=>e.classList.remove('selected'));el.classList.add('selected');document.getElementById('btn-to-step3').disabled=false}));
 }
-document.getElementById('customer-search').addEventListener('input',function(){const q=normalizeStr(this.value);document.querySelectorAll('.customer-item').forEach(el=>{const x=state.gsheetData.customerList[parseInt(el.dataset.idx)];if(!x)return;el.style.display=normalizeStr(x.CustomerName).includes(q)?'block':'none'})});
+document.getElementById('customer-search').addEventListener('input',function(){const q=normalizeStr(this.value);document.querySelectorAll('.customer-item').forEach(el=>{const idx=parseInt(el.dataset.idx);const x=state.gsheetData.customerList[idx];if(!x)return;el.style.display=normalizeStr(x.CustomerName).includes(q)?'block':'none'})});
 
-function sizeGroupOf(name){
-const n=(name||'').toUpperCase();
-if(n.includes('10L'))return'10L';
-if(n.includes('20L'))return'20L';
-if(n.includes('100PCS'))return'100pcs';
-if(n.includes('150PCS'))return'150pcs';
-return null;
-}
-function computeGroupTotals(items){
-const t={};
-items.forEach(it=>{if(it&&it.found&&(it.promoType==='TIER'||it.promoType==='PASIR')){const g=sizeGroupOf(it.description);if(g){const k=it.promoType+'|'+g;t[k]=(t[k]||0)+it.qty}}}
-);
-return t;
-}
-function findCustomerRule(customer,promoType,groupTotal){
-if(!customer)return null;
-return state.customerRules.find(r=>normKey(r.CustomerName)===normKey(customer.CustomerName)&&(r.PromoType||'').trim().toUpperCase()===promoType&&groupTotal>=(parseFloat(r.MinQty)||0))||null;
-}
-function calculatePrice(item,customer,groupTotals){
+function calculatePrice(item,customer){
 if(!item.found)return{unitPrice:0};
-const area=((customer&&customer.Area)||'').toUpperCase();
+const area=(customer.Area||'').trim().toUpperCase();
 if(item.promoType==='TIER'||item.promoType==='PASIR'){
-const g=sizeGroupOf(item.description);
-const key=item.promoType+'|'+g;
-const groupTotal=g?(groupTotals[key]||item.qty):item.qty;
-const rule=findCustomerRule(customer,item.promoType,groupTotal);
 const tiers=state.gsheetData.promoTier.filter(t=>normKey(t.Deskripsi)===normKey(item.description));
 if(tiers.length){
 tiers.sort((a,b)=>(parseInt(b.TierQty)||0)-(parseInt(a.TierQty)||0));
-let tierRow=null;
-if(rule&&rule.ForceTierQty)tierRow=tiers.find(t=>parseInt(t.TierQty)===parseInt(rule.ForceTierQty));
-if(!tierRow)tierRow=tiers.find(t=>groupTotal>=(parseInt(t.TierQty)||0));
-if(tierRow){
+const sel=tiers.find(t=>item.qty>=(parseInt(t.TierQty)||0));
+if(sel){
 let p;
-if(area.includes('JABODETABEK'))p=item.nettPriceOutput==='NettSellPrice'?parsePrice(tierRow.NettSellPriceJabodetabek):parsePrice(tierRow.NettSellPricePPNJabodetabek);
-else p=item.nettPriceOutput==='NettSellPrice'?parsePrice(tierRow.NettSellPriceJawaBali):parsePrice(tierRow.NettSellPricePPNJawaBali);
+if(area.includes('JABODETABEK'))p=item.nettPriceOutput==='NettSellPrice'?parsePrice(sel.NettSellPriceJabodetabek):parsePrice(sel.NettSellPricePPNJabodetabek);
+else p=item.nettPriceOutput==='NettSellPrice'?parsePrice(sel.NettSellPriceJawaBali):parsePrice(sel.NettSellPricePPNJawaBali);
 if(!isNaN(p)&&p>0)return{unitPrice:Math.round(p)};
 }
 }
-return{unitPrice:Math.round(item.nettPriceOutput==='NettSellPrice'?item.netSellPrice:item.netSellPricePPN)};
 }
 return{unitPrice:Math.round(item.nettPriceOutput==='NettSellPrice'?item.netSellPrice:item.netSellPricePPN)};
 }
-function getProductDiscount(item,customer,groupTotals){
+function getProductDiscount(item){
 if(!item.promoEnabled)return 0;
-const g=sizeGroupOf(item.description);
-const key=item.promoType+'|'+g;
-const groupTotal=g?(groupTotals[key]||item.qty):item.qty;
-const rule=findCustomerRule(customer,item.promoType,groupTotal);
-if(rule&&rule.ProductDiscRate)return parseDiscount(rule.ProductDiscRate);
 const rules=state.gsheetData.discountRules.filter(r=>normKey(r.Deskripsi)===normKey(item.description));
 if(!rules.length)return 0;
 rules.sort((a,b)=>(parseInt(b.MinQty)||0)-(parseInt(a.MinQty)||0));
 const m=rules.find(r=>item.qty>=(parseInt(r.MinQty)||0));
 return m?parseDiscount(m.ProductDiscRate):0;
 }
-function getPromoInfo(item,customer,groupTotals){
+function getPromoInfo(item){
 if(!item.found||!item.promoEnabled)return'No Promo';
+const promoType=item.promoType;
 const parts=[];
-if(item.promoType==='PASIR'||item.promoType==='TIER'){
-const g=sizeGroupOf(item.description);
-const key=item.promoType+'|'+g;
-const groupTotal=g?(groupTotals[key]||item.qty):item.qty;
-const rule=findCustomerRule(customer,item.promoType,groupTotal);
-const tiers=state.gsheetData.promoTier.filter(t=>normKey(t.Deskripsi)===normKey(item.description)).sort((a,b)=>(parseInt(b.TierQty)||0)-(parseInt(a.TierQty)||0));
-let tierRow=null;
-if(rule&&rule.ForceTierQty)tierRow=tiers.find(t=>parseInt(t.TierQty)===parseInt(rule.ForceTierQty));
-if(!tierRow)tierRow=tiers.find(t=>groupTotal>=(parseInt(t.TierQty)||0));
-if(tierRow)parts.push((item.promoType==='PASIR'?'Promo Tier ':'Promo Tissue ')+tierRow.TierQty);
-else if(item.promoType==='TIER')parts.push('Promo Tissue');
-}
-const disc=getProductDiscount(item,customer,groupTotals);
-if(disc>0)parts.push('Promo '+fmtPct(disc)+'%');
-if(item.promoType!=='PASIR'&&item.promoType!=='NONE'){
-const s=calculatePromoSplit(item.qty,item.promoType);
+if(promoType==='PASIR'){if(item.qty>0)parts.push('Promo Tier Pasir');}
+else if(promoType==='TIER'){if(item.qty>0)parts.push('Promo Tier Tissue');}
+const disc=getProductDiscount(item);
+if(disc>0)parts.push('Promo '+ (disc*100) +'%');
+if(promoType!=='PASIR'&&promoType!=='NONE'&&promoType!=='SBO'){
+const s=calculatePromoSplit(item.qty,promoType);
 if(s.freeQty>0)parts.push('Buy11Get1 (Bayar '+s.paidQty+', Free '+s.freeQty+')');
 }
-return parts.length?parts.join(' dan '):'No Promo';
+return parts.length?parts.join(' + '):'No Promo';
 }
 
 function buildReviewHeader(){
+const COLS=[
+{key:'promo',label:'Promo',type:'none'},
+{key:'productCode',label:'Kode',type:'text'},
+{key:'productName',label:'Product Name',type:'text'},
+{key:'qty',label:'Order Qty',type:'num'},
+{key:'stockPT',label:'Stock PT',type:'num'},
+{key:'stockPribadi',label:'Stock Pribadi',type:'num'},
+{key:'totalStock',label:'Total Stock',type:'num'},
+{key:'status',label:'Status',type:'text'},
+{key:'promoInfo',label:'Promo Info',type:'text'},
+{key:'unitPrice',label:'Unit Price',type:'num'},
+{key:'totalPrice',label:'Total Price',type:'num'}
+];
 const thead=document.getElementById('review-thead');
 thead.innerHTML=`<tr>${COLS.map(c=>c.type==='none'?`<th>${c.label}</th>`:`<th class="th-sort" data-key="${c.key}">${c.label}<span class="sort-ind" data-ind="${c.key}"></span></th>`).join('')}</tr>
 <tr class="filter-row">${COLS.map(c=>c.type==='none'?'<th></th>':`<th><input class="col-filter" data-key="${c.key}" placeholder="Filter…"></th>`).join('')}</tr>`;
@@ -484,20 +449,20 @@ default:return'';
 
 function renderReviewTable(){
 const customer=state.gsheetData.customerList[state.selectedCustomer];if(!customer)return;
-const groupTotals=computeGroupTotals(state.processedItems);
-document.getElementById('review-customer-info').textContent=`Customer: ${customer.CustomerName} | Area: ${customer.Area} | Discount: ${fmtPct(parseDiscount(customer.DiscountRate))}%`;
-let rows=state.processedItems.map((item,idx)=>({item,idx,d:derive(item,customer,groupTotals)}));
-let avail=0,low=0,notAvail=0,notFound=0;
-rows.forEach(r=>{if(r.d.status==='Available')avail++;else if(r.d.status==='Low Stock')low++;else if(r.d.status==='Not Available')notAvail++;else notFound++});
+document.getElementById('review-customer-info').textContent=`Customer: ${customer.CustomerName} | Area: ${customer.Area} | Discount: ${parseDiscount(customer.DiscountRate)*100}%`;
+let rows=state.processedItems.map((item,idx)=>({item,idx,d:derive(item,customer)}));
+let avail=0,low=0,notAvail=0;
+rows.forEach(r=>{if(r.d.status==='Available')avail++;else if(r.d.status==='Low Stock')low++;else if(r.d.status==='Not Available')notAvail++});
 const af=Object.entries(state.filters).filter(([k,v])=>v&&v.trim()!=='');
 if(af.length){rows=rows.filter(r=>af.every(([k,v])=>String(getVal(r,k)).toLowerCase().includes(v.toLowerCase().trim())))}
-if(state.sorts.length){rows.sort((a,b)=>{for(const s of state.sorts){const col=COLS.find(c=>c.key===s.key);const va=getVal(a,s.key),vb=getVal(b,s.key);let cmp=0;if(col&&col.type==='num'){cmp=(parseFloat(va)||0)-(parseFloat(vb)||0)}else{cmp=String(va).localeCompare(String(vb))}if(cmp!==0)return cmp*s.dir}return a.idx-b.idx})}
+if(state.sorts.length){rows.sort((a,b)=>{for(const s of state.sorts){const col=['qty','stockPT','stockPribadi','totalStock','unitPrice','totalPrice'].includes(s.key)?'num':'text';const va=getVal(a,s.key),vb=getVal(b,s.key);let cmp=0;if(col==='num'){cmp=(parseFloat(va)||0)-(parseFloat(vb)||0)}else{cmp=String(va).localeCompare(String(vb))}if(cmp!==0)return cmp*s.dir}return a.idx-b.idx})}
 const tbody=document.getElementById('review-table-body');
 tbody.innerHTML=rows.map(r=>{
 const it=r.item,d=r.d;
 if(!it.found)return`<tr class="row-danger"><td>❌</td><td>${it.productCode}</td><td>${it.productName}</td><td><input type="number" class="qty-input" value="${it.qty}" data-idx="${r.idx}"></td><td>-</td><td>-</td><td>-</td><td><span class="badge badge-danger">Not Found</span></td><td>-</td><td>-</td><td>-</td></tr>`;
+const isAvail=d.status==='Available';
 const rowCls=d.status==='Not Available'?'row-danger':(d.status==='Low Stock'?'row-warning':'');
-const badge=d.status==='Available'?'badge-success':(d.status==='Low Stock'?'badge-warning':'badge-danger');
+const badge=isAvail?'badge-success':(d.status==='Low Stock'?'badge-warning':'badge-danger');
 const qtyCls=d.status==='Not Available'?'qty-input qty-grey':'qty-input';
 const warn=it.hasTierWarning?' <span class="badge badge-warning">⚠ Tier missing</span>':'';
 return`<tr class="${rowCls}">
@@ -509,7 +474,7 @@ return`<tr class="${rowCls}">
 <td><span class="badge ${badge}">${d.status}</span></td>
 <td><span class="promo-tag">${d.promoInfo}</span>${warn}</td>
 <td style="font-weight:600">${formatCurrency(d.unitPrice)}</td>
-<td style="font-weight:700">${formatCurrency(d.totalPrice)}</td>
+<td style="font-weight:600">${formatCurrency(d.totalPrice)}</td>
 </tr>`;
 }).join('');
 document.getElementById('review-summary').innerHTML=`
@@ -519,48 +484,36 @@ document.getElementById('review-summary').innerHTML=`
 <div class="summary-item"><div class="label">Not Available</div><div class="value" style="color:var(--danger)">${notAvail}</div></div>`;
 tbody.querySelectorAll('.qty-input').forEach(inp=>inp.addEventListener('change',function(){state.processedItems[this.dataset.idx].qty=parseInt(this.value)||0;renderReviewTable()}));
 tbody.querySelectorAll('.toggle').forEach(tog=>tog.addEventListener('click',function(){const i=this.dataset.toggle;state.processedItems[i].promoEnabled=!state.processedItems[i].promoEnabled;renderReviewTable()}));
-fixStickyTops();
 }
-function derive(item,customer,groupTotals){
+function derive(item,customer){
 const status=!item.found?'Not Found':(item.totalStock===0?'Not Available':(item.totalStock<item.qty?'Low Stock':'Available'));
-const unitPrice=calculatePrice(item,customer,groupTotals).unitPrice;
+const unitPrice=calculatePrice(item,customer).unitPrice;
 const s=item.promoEnabled?calculatePromoSplit(item.qty,item.promoType):{paidQty:item.qty,freeQty:0};
-return{status,unitPrice,paidQty:s.paidQty,totalPrice:s.paidQty*unitPrice,promoInfo:getPromoInfo(item,customer,groupTotals)};
+return{status,unitPrice,paidQty:s.paidQty,totalPrice:s.paidQty*unitPrice,promoInfo:getPromoInfo(item)};
 }
 
 function generatePreview(){
-const alertBox=document.getElementById('review-alert');
 const on=document.getElementById('order-number'),oe=document.getElementById('order-number-error');
 const orderNumber=on.value.trim();
 if(!orderNumber){on.classList.add('input-error');oe.style.display='block';on.focus();return}
 on.classList.remove('input-error');oe.style.display='none';
-// [FIX] BLOCK kalau masih ada Low Stock
-const lowItems=state.processedItems.filter(it=>it.found&&it.totalStock>0&&it.qty>it.totalStock);
-if(lowItems.length){
-const names=lowItems.slice(0,5).map(it=>it.productName).join(', ');
-alertBox.innerHTML=`<div class="alert alert-warning">⚠️ <b>${lowItems.length} item Low Stock</b> — order qty melebihi total stock. Turunkan qty / sesuaikan dulu sebelum generate: ${names}${lowItems.length>5?'…':''}</div>`;
-alertBox.scrollIntoView({behavior:'smooth',block:'center'});
-return;
-}
-alertBox.innerHTML='';
 const customer=state.gsheetData.customerList[state.selectedCustomer];
-const groupTotals=computeGroupTotals(state.processedItems);
 const orderDateSerial=todaySerial();
 const dueDateSerial=orderDateSerial+(parseInt(customer.DueDateDays)||30);
 const sd=document.getElementById('shipping-date').value;
 const shippingDateSerial=sd?dateToExcelSerial(new Date(sd)):'';
 const customerDiscount=parseDiscount(customer.DiscountRate);
-const email=(customer.Email||'').trim();
-const rows=[];
+let isFirstRow=true;const rows=[];
 state.processedItems.forEach(item=>{
 if(!item.found||item.qty<=0)return;
 if(item.totalStock===0)return;
-const priceInfo=calculatePrice(item,customer,groupTotals);
-const productDiscount=getProductDiscount(item,customer,groupTotals);
+const priceInfo=calculatePrice(item,customer);
+const productDiscount=getProductDiscount(item);
 const s=item.promoEnabled?calculatePromoSplit(item.qty,item.promoType):{paidQty:item.qty,freeQty:0};
-rows.push({customer:customer.CustomerName,email,billingAddress:customer.BillingAddress||'',shippingAddress:customer.ShippingAddress||'',orderDate:orderDateSerial,dueDate:dueDateSerial,shippingDate:shippingDateSerial,orderNumber,productName:item.productName,description:item.description,quantity:s.paidQty,unit:item.unit,unitPrice:priceInfo.unitPrice,productDiscountRate:productDiscount?fmtPct(productDiscount):'',orderDiscount:customerDiscount?fmtPct(customerDiscount)+'%':'',taxName:'VAT -'});
+rows.push({customer:customer.CustomerName,email:FIXED_EMAIL,billingAddress:customer.BillingAddress||'',shippingAddress:customer.ShippingAddress||'',orderDate:orderDateSerial,dueDate:dueDateSerial,shippingDate:shippingDateSerial,orderNumber,message:FIXED_MESSAGE,productName:item.productName,description:item.description,quantity:s.paidQty,unit:item.unit,unitPrice:priceInfo.unitPrice,productDiscountRate:productDiscount? (productDiscount*100):'',orderDiscount:customerDiscount? (customerDiscount*100)+'%':'',taxName:isFirstRow?'VAT -':''});
+isFirstRow=false;
 if(s.freeQty>0){
-rows.push({customer:customer.CustomerName,email,billingAddress:customer.BillingAddress||'',shippingAddress:customer.ShippingAddress||'',orderDate:orderDateSerial,dueDate:dueDateSerial,shippingDate:shippingDateSerial,orderNumber,productName:item.productName,description:item.description,quantity:s.freeQty,unit:item.unit,unitPrice:0,productDiscountRate:productDiscount?fmtPct(productDiscount):'',orderDiscount:customerDiscount?fmtPct(customerDiscount)+'%':'',taxName:'VAT -'});
+rows.push({customer:customer.CustomerName,email:FIXED_EMAIL,billingAddress:customer.BillingAddress||'',shippingAddress:customer.ShippingAddress||'',orderDate:orderDateSerial,dueDate:dueDateSerial,shippingDate:shippingDateSerial,orderNumber,message:FIXED_MESSAGE,productName:item.productName,description:item.description,quantity:s.freeQty,unit:item.unit,unitPrice:0,productDiscountRate:productDiscount? (productDiscount*100):'',orderDiscount:customerDiscount? (customerDiscount*100)+'%':'',taxName:''});
 }
 });
 state.outputRows=rows;renderPreview(rows,customer);goToStep(4);
@@ -574,47 +527,11 @@ document.getElementById('preview-summary').innerHTML=`
 <div class="summary-item"><div class="label">Total Qty</div><div class="value">${tq}</div></div>
 <div class="summary-item"><div class="label">Total Value</div><div class="value">${formatCurrency(tv)}</div></div>
 <div class="summary-item"><div class="label">Customer</div><div class="value" style="font-size:14px">${customer.CustomerName}</div></div>`;
-fixStickyTops();
 }
 
-// [FIX IDR] row dibangun persis 30 kolom sejajar header -> IDR jatuh di kolom AC (#currency code)
-function buildOutRow(r){
-return[
-r.customer,          // A  *Customer
-r.email,             // B  Email
-r.billingAddress,    // C  BillingAddress
-r.shippingAddress,   // D  ShippingAddress
-r.orderDate,         // E  *OrderDate
-r.dueDate,           // F  *DueDate
-r.shippingDate,      // G  ShippingDate
-'',                  // H  ShipVia
-'',                  // I  TrackingNo
-'',                  // J  CustomerRefNo
-r.orderNumber,       // K  *OrderNumber
-FIXED_MESSAGE,       // L  Message
-'',                  // M  Memo
-r.productName,       // N  *ProductName
-r.description,       // O  Description
-r.quantity,          // P  *Quantity
-r.unit,              // Q  *Unit
-r.unitPrice,         // R  *UnitPrice
-r.productDiscountRate, // S ProductDiscountRate(%)
-r.orderDiscount,     // T  OrderDiscount(value or %)
-r.taxName,           // U  TaxName
-'',                  // V  TaxRate(%)
-'',                  // W  ShippingFee
-'',                  // X  #paid?(yes/no)
-'',                  // Y  #PaymentMethod
-'',                  // Z  #PaidToAccountCode
-'',                  // AA Tags
-'',                  // AB WarehouseName
-'IDR',               // AC #currency code
-''                   // AD Custom_Fields
-];
-}
 function downloadExcel(){
 const headers=['*Customer','Email','BillingAddress','ShippingAddress','*OrderDate','*DueDate','ShippingDate','ShipVia','TrackingNo','CustomerRefNo','*OrderNumber','Message','Memo','*ProductName','Description','*Quantity','*Unit','*UnitPrice','ProductDiscountRate(%)','OrderDiscount(value or %)','TaxName','TaxRate(%)','ShippingFee','#paid?(yes/no)','#PaymentMethod','#PaidToAccountCode','Tags (use ; to separate tags)','WarehouseName','#currency code(example: IDR,USD,CAD)','Custom_Fields_[Nama_Fields]'];
-const data=[headers,...state.outputRows.map(buildOutRow)];
+const data=[headers,...state.outputRows.map(r=>[r.customer,r.email,r.billingAddress,r.shippingAddress,r.orderDate,r.dueDate,r.shippingDate,'','','',r.orderNumber,r.message,'',r.productName,r.description,r.quantity,r.unit,r.unitPrice,r.productDiscountRate,r.orderDiscount,r.taxName,'','','','','','','','','IDR',''])];
 const ws=XLSX.utils.aoa_to_sheet(data);
 ws['!cols']=[{wch:25},{wch:50},{wch:40},{wch:40},{wch:12},{wch:12},{wch:12},{wch:8},{wch:10},{wch:12},{wch:12},{wch:50},{wch:8},{wch:40},{wch:40},{wch:10},{wch:8},{wch:12},{wch:12},{wch:12},{wch:8},{wch:8},{wch:10},{wch:8},{wch:12},{wch:12},{wch:15},{wch:12},{wch:10},{wch:15}];
 const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Sheet1');
