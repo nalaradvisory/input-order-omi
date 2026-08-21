@@ -152,7 +152,15 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 <div class="card">
 <div class="flex-between mb-4">
 <div><div class="card-title">📝 Review & Adjust Order</div><div class="card-desc" id="review-customer-info"></div></div>
+<div class="flex gap-2" style="align-items:center; flex-wrap:wrap;">
+<label class="input-label" style="margin:0; white-space:nowrap;">Sumber Stock:</label>
+<select id="stock-source-select" class="input-field" style="width:auto; min-width:180px; padding:8px 12px; margin:0;">
+<option value="ALL">Semua (PT + Pribadi)</option>
+<option value="PT">Stock PT Saja</option>
+<option value="PRIBADI">Stock Pribadi Saja</option>
+</select>
 <button class="btn btn-secondary btn-sm" id="btn-back-2">← Ganti Customer</button>
+</div>
 </div>
 <div class="grid-2 mb-4">
 <div class="input-group"><label class="input-label">Order Number *</label><input type="text" class="input-field" id="order-number" placeholder="Contoh: 100001"><div id="order-number-error" style="color:var(--danger);font-size:12px;margin-top:4px;display:none">⚠ Order Number wajib diisi!</div></div>
@@ -210,7 +218,7 @@ const GSHEET_BASE=`https://docs.google.com/spreadsheets/d/${GSHEET_ID}/gviz/tq?t
 const FIXED_EMAIL="agrindoconsultant1@gmail.com, ghena.fakturpajak@gmail.com, acc.omi001@gmail.com";
 const FIXED_MESSAGE="- Barang yang sudah dibeli tidak dapat dikembalikan atau ditukar.\n\n- Harap mencantumkan Nomor Faktur di kolom berita untuk konfirmasi pembayaran.\n\n- Payment Rekening BCA : \n5810550718 A/N PT.OLEGO MANDIRI INDONESIA.";
 
-const state={currentStep:1,fileData:{order:null,stockPT:null,stockPribadi:null},gsheetData:{productList:[],customerList:[],promoTier:[],discountRules:[]},selectedCustomer:null,processedItems:[],outputRows:[],filters:{},sorts:[]};
+const state={currentStep:1,stockSource:'ALL',fileData:{order:null,stockPT:null,stockPribadi:null},gsheetData:{productList:[],customerList:[],promoTier:[],discountRules:[]},selectedCustomer:null,processedItems:[],outputRows:[],filters:{},sorts:[]};
 
 const normalizeStr=s=>s==null?'':String(s).trim().toLowerCase();
 const normKey=s=>s==null?'':String(s).toLowerCase().replace(/\s+/g,' ').trim();
@@ -220,7 +228,6 @@ const formatCurrency=n=>{if(isNaN(n)||n===null)return'Rp 0';return'Rp '+Math.rou
 function parsePrice(v){if(v==null||v==='')return 0;const n=parseFloat(String(v).trim().replace(/,/g,''));return isNaN(n)?0:n}
 function parseDiscount(v){if(!v&&v!==0)return 0;let s=String(v).trim().replace(/%/g,'').replace(/,/g,'.');const n=parseFloat(s);if(isNaN(n))return 0;return n>1?n/100:n}
 
-// [FIX] SBO dikecualikan dari Buy11Get1 (11+1). SBO cuma dapet diskon dari ProductDiscountRules.
 function calculatePromoSplit(qty,promoType){
 if(promoType==='PASIR'||promoType==='NONE'||promoType==='SBO')return{paidQty:qty,freeQty:0,type:'NONE'};
 if(qty>=11&&qty%11===0)return{paidQty:qty,freeQty:qty/11,type:'PROMO11'};
@@ -266,7 +273,6 @@ try{const resp=await fetch(GSHEET_BASE+encodeURIComponent(s));if(!resp.ok){res[s
 return res;
 }
 
-// [FIX] Stock disimpan by-Name DAN by-Code, biar typo nama (2700MmAh vs 2700mAh) tetap ketemu lewat Kode
 function parseStockFile(data,target){
 const byName={},byCode={};
 if(!data||!Array.isArray(data))return{byName,byCode};
@@ -400,25 +406,26 @@ return parts.length?parts.join(' + '):'No Promo';
 }
 
 function buildReviewHeader(){
-const COLS=[
-{key:'promo',label:'Promo',type:'none'},
-{key:'productCode',label:'Kode',type:'text'},
-{key:'productName',label:'Product Name',type:'text'},
-{key:'qty',label:'Order Qty',type:'num'},
-{key:'stockPT',label:'Stock PT',type:'num'},
-{key:'stockPribadi',label:'Stock Pribadi',type:'num'},
-{key:'totalStock',label:'Total Stock',type:'num'},
-{key:'status',label:'Status',type:'text'},
-{key:'promoInfo',label:'Promo Info',type:'text'},
-{key:'unitPrice',label:'Unit Price',type:'num'},
-{key:'totalPrice',label:'Total Price',type:'num'}
-];
-const thead=document.getElementById('review-thead');
-thead.innerHTML=`<tr>${COLS.map(c=>c.type==='none'?`<th>${c.label}</th>`:`<th class="th-sort" data-key="${c.key}">${c.label}<span class="sort-ind" data-ind="${c.key}"></span></th>`).join('')}</tr>
-<tr class="filter-row">${COLS.map(c=>c.type==='none'?'<th></th>':`<th><input class="col-filter" data-key="${c.key}" placeholder="Filter…"></th>`).join('')}</tr>`;
-thead.querySelectorAll('.th-sort').forEach(th=>th.addEventListener('click',onSortClick));
-let timer=null;
-thead.querySelectorAll('.col-filter').forEach(inp=>inp.addEventListener('input',e=>{state.filters[e.target.dataset.key]=e.target.value;clearTimeout(timer);timer=setTimeout(()=>renderReviewTable(),350)}));
+    const stockLabel = state.stockSource === 'PT' ? 'Stock Aktif (PT)' : (state.stockSource === 'PRIBADI' ? 'Stock Aktif (Pribadi)' : 'Total Stock (Semua)');
+    const COLS=[
+        {key:'promo',label:'Promo',type:'none'},
+        {key:'productCode',label:'Kode',type:'text'},
+        {key:'productName',label:'Product Name',type:'text'},
+        {key:'qty',label:'Order Qty',type:'num'},
+        {key:'stockPT',label:'Stock PT',type:'num'},
+        {key:'stockPribadi',label:'Stock Pribadi',type:'num'},
+        {key:'effectiveStock',label:stockLabel,type:'num'},
+        {key:'status',label:'Status',type:'text'},
+        {key:'promoInfo',label:'Promo Info',type:'text'},
+        {key:'unitPrice',label:'Unit Price',type:'num'},
+        {key:'totalPrice',label:'Total Price',type:'num'}
+    ];
+    const thead=document.getElementById('review-thead');
+    thead.innerHTML=`<tr>${COLS.map(c=>c.type==='none'?`<th>${c.label}</th>`:`<th class="th-sort" data-key="${c.key}">${c.label}<span class="sort-ind" data-ind="${c.key}"></span></th>`).join('')}</tr>
+    <tr class="filter-row">${COLS.map(c=>c.type==='none'?'<th></th>':`<th><input class="col-filter" data-key="${c.key}" placeholder="Filter…"></th>`).join('')}</tr>`;
+    thead.querySelectorAll('.th-sort').forEach(th=>th.addEventListener('click',onSortClick));
+    let timer=null;
+    thead.querySelectorAll('.col-filter').forEach(inp=>inp.addEventListener('input',e=>{state.filters[e.target.dataset.key]=e.target.value;clearTimeout(timer);timer=setTimeout(()=>renderReviewTable(),350)}));
 }
 function onSortClick(e){
 const key=e.currentTarget.dataset.key;
@@ -433,17 +440,18 @@ document.querySelectorAll('.sort-ind').forEach(sp=>{const key=sp.dataset.ind;con
 function getVal(r,key){
 const it=r.item,d=r.d;
 switch(key){
-case'productCode':return it.productCode||'';
-case'productName':return it.productName||'';
-case'qty':return it.qty;
-case'stockPT':return it.stockPT;
-case'stockPribadi':return it.stockPribadi;
-case'totalStock':return it.totalStock;
-case'status':return d.status;
-case'promoInfo':return d.promoInfo;
-case'unitPrice':return d.unitPrice;
-case'totalPrice':return d.totalPrice;
-default:return'';
+case 'productCode': return it.productCode||'';
+case 'productName': return it.productName||'';
+case 'qty': return it.qty;
+case 'stockPT': return it.stockPT;
+case 'stockPribadi': return it.stockPribadi;
+case 'effectiveStock': return d.effectiveStock;
+case 'totalStock': return it.totalStock;
+case 'status': return d.status;
+case 'promoInfo': return d.promoInfo;
+case 'unitPrice': return d.unitPrice;
+case 'totalPrice': return d.totalPrice;
+default: return '';
 }
 }
 
@@ -455,7 +463,7 @@ let avail=0,low=0,notAvail=0;
 rows.forEach(r=>{if(r.d.status==='Available')avail++;else if(r.d.status==='Low Stock')low++;else if(r.d.status==='Not Available')notAvail++});
 const af=Object.entries(state.filters).filter(([k,v])=>v&&v.trim()!=='');
 if(af.length){rows=rows.filter(r=>af.every(([k,v])=>String(getVal(r,k)).toLowerCase().includes(v.toLowerCase().trim())))}
-if(state.sorts.length){rows.sort((a,b)=>{for(const s of state.sorts){const col=['qty','stockPT','stockPribadi','totalStock','unitPrice','totalPrice'].includes(s.key)?'num':'text';const va=getVal(a,s.key),vb=getVal(b,s.key);let cmp=0;if(col==='num'){cmp=(parseFloat(va)||0)-(parseFloat(vb)||0)}else{cmp=String(va).localeCompare(String(vb))}if(cmp!==0)return cmp*s.dir}return a.idx-b.idx})}
+if(state.sorts.length){rows.sort((a,b)=>{for(const s of state.sorts){const col=['qty','stockPT','stockPribadi','effectiveStock','totalStock','unitPrice','totalPrice'].includes(s.key)?'num':'text';const va=getVal(a,s.key),vb=getVal(b,s.key);let cmp=0;if(col==='num'){cmp=(parseFloat(va)||0)-(parseFloat(vb)||0)}else{cmp=String(va).localeCompare(String(vb))}if(cmp!==0)return cmp*s.dir}return a.idx-b.idx})}
 const tbody=document.getElementById('review-table-body');
 tbody.innerHTML=rows.map(r=>{
 const it=r.item,d=r.d;
@@ -465,12 +473,19 @@ const rowCls=d.status==='Not Available'?'row-danger':(d.status==='Low Stock'?'ro
 const badge=isAvail?'badge-success':(d.status==='Low Stock'?'badge-warning':'badge-danger');
 const qtyCls=d.status==='Not Available'?'qty-input qty-grey':'qty-input';
 const warn=it.hasTierWarning?' <span class="badge badge-warning">⚠ Tier missing</span>':'';
+
+let stockPtStyle = state.stockSource === 'PT' ? 'font-weight:700; color:var(--teal); background:var(--teal-soft);' : '';
+let stockPrStyle = state.stockSource === 'PRIBADI' ? 'font-weight:700; color:var(--teal); background:var(--teal-soft);' : '';
+let stockEffStyle = state.stockSource === 'ALL' ? 'font-weight:700;' : 'font-weight:700; color:var(--teal); background:var(--teal-soft);';
+
 return`<tr class="${rowCls}">
 <td><div class="toggle-wrapper"><div class="toggle ${it.promoEnabled?'active':''}" data-toggle="${r.idx}"></div></div></td>
 <td style="font-size:11px;color:var(--ink-3)">${it.productCode}</td>
 <td style="font-weight:500">${it.productName}</td>
 <td><input type="number" class="${qtyCls}" value="${it.qty}" min="0" data-idx="${r.idx}"></td>
-<td>${it.stockPT}</td><td>${it.stockPribadi}</td><td style="font-weight:700">${it.totalStock}</td>
+<td style="${stockPtStyle}">${it.stockPT}</td>
+<td style="${stockPrStyle}">${it.stockPribadi}</td>
+<td style="${stockEffStyle}">${d.effectiveStock}</td>
 <td><span class="badge ${badge}">${d.status}</span></td>
 <td><span class="promo-tag">${d.promoInfo}</span>${warn}</td>
 <td style="font-weight:600">${formatCurrency(d.unitPrice)}</td>
@@ -486,10 +501,14 @@ tbody.querySelectorAll('.qty-input').forEach(inp=>inp.addEventListener('change',
 tbody.querySelectorAll('.toggle').forEach(tog=>tog.addEventListener('click',function(){const i=this.dataset.toggle;state.processedItems[i].promoEnabled=!state.processedItems[i].promoEnabled;renderReviewTable()}));
 }
 function derive(item,customer){
-const status=!item.found?'Not Found':(item.totalStock===0?'Not Available':(item.totalStock<item.qty?'Low Stock':'Available'));
-const unitPrice=calculatePrice(item,customer).unitPrice;
-const s=item.promoEnabled?calculatePromoSplit(item.qty,item.promoType):{paidQty:item.qty,freeQty:0};
-return{status,unitPrice,paidQty:s.paidQty,totalPrice:s.paidQty*unitPrice,promoInfo:getPromoInfo(item)};
+    let effectiveStock = item.totalStock;
+    if (state.stockSource === 'PT') effectiveStock = item.stockPT;
+    else if (state.stockSource === 'PRIBADI') effectiveStock = item.stockPribadi;
+
+    const status=!item.found?'Not Found':(effectiveStock===0?'Not Available':(effectiveStock<item.qty?'Low Stock':'Available'));
+    const unitPrice=calculatePrice(item,customer).unitPrice;
+    const s=item.promoEnabled?calculatePromoSplit(item.qty,item.promoType):{paidQty:item.qty,freeQty:0};
+    return {status,unitPrice,paidQty:s.paidQty,totalPrice:s.paidQty*unitPrice,promoInfo:getPromoInfo(item),effectiveStock};
 }
 
 function generatePreview(){
@@ -506,7 +525,13 @@ const customerDiscount=parseDiscount(customer.DiscountRate);
 let isFirstRow=true;const rows=[];
 state.processedItems.forEach(item=>{
 if(!item.found||item.qty<=0)return;
-if(item.totalStock===0)return;
+
+let effectiveStock = item.totalStock;
+if (state.stockSource === 'PT') effectiveStock = item.stockPT;
+else if (state.stockSource === 'PRIBADI') effectiveStock = item.stockPribadi;
+
+if(effectiveStock===0)return;
+
 const priceInfo=calculatePrice(item,customer);
 const productDiscount=getProductDiscount(item);
 const s=item.promoEnabled?calculatePromoSplit(item.qty,item.promoType):{paidQty:item.qty,freeQty:0};
@@ -552,6 +577,13 @@ document.getElementById('btn-back-3b').addEventListener('click',()=>goToStep(3))
 document.getElementById('btn-download-top').addEventListener('click',downloadExcel);
 document.getElementById('btn-download-bottom').addEventListener('click',downloadExcel);
 document.getElementById('order-number').addEventListener('input',function(){if(this.value.trim()){this.classList.remove('input-error');document.getElementById('order-number-error').style.display='none'}});
+
+document.getElementById('stock-source-select').addEventListener('change', function(){
+    state.stockSource = this.value;
+    buildReviewHeader();
+    renderReviewTable();
+});
+
 });
 </script>
 </body>
