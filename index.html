@@ -51,12 +51,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .btn-sm{padding:6px 12px;font-size:12px}
 .table-wrapper{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--line)}
 table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
-th{background:var(--bg);padding:10px 12px;text-align:left;font-weight:600;color:var(--ink-2);white-space:nowrap;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;box-shadow:0 1px 0 var(--line)}
+th{background:var(--bg);padding:10px 12px;text-align:left;font-weight:600;color:var(--ink-2);white-space:nowrap;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:6;box-shadow:0 1px 0 var(--line)}
 td{padding:10px 14px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
 tr:hover td{background:var(--grey-soft)}
 tr.row-danger td{background:var(--danger-light)}
 tr.row-warning td{background:var(--amber-soft)}
 tr.row-free td{background:var(--teal-soft);font-style:italic}
+.filter-row th{top:41px;z-index:5;padding:6px 8px}
 .badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600}
 .badge-success{background:var(--success-light);color:var(--success)}
 .badge-danger{background:var(--danger-light);color:var(--danger)}
@@ -72,7 +73,7 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 .search-box input{padding-left:36px}
 .search-box::before{content:"🔍";position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px}
 .summary-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px}
-.summary-item{background:var(--bg);border-radius:var(--radius);padding:14px;text-align:center;border:1px solid var(--line)}
+.summary-item{background:var(--bg);border-radius:var(--radius);padding:16px;text-align:center;border:1px solid var(--line)}
 .summary-item .label{font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px}
 .summary-item .value{font-size:20px;font-weight:700;margin-top:4px}
 .toggle-wrapper{display:flex;align-items:center;gap:8px}
@@ -86,24 +87,17 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 @keyframes spin{to{transform:rotate(360deg)}}
 .qty-input{width:70px;padding:6px 8px;background:var(--bg);border:1px solid var(--line);border-radius:4px;color:var(--ink);font-size:13px;text-align:center}
 .qty-input:focus{border-color:var(--teal);outline:none}
-.qty-grey{color:var(--ink-3)!important}
 .flex{display:flex}.flex-between{display:flex;justify-content:space-between;align-items:center}
 .gap-2{gap:8px}.mt-3{margin-top:12px}.mt-4{margin-top:16px}.mb-4{margin-bottom:16px}
-.table-scroll{max-height:520px;overflow-y:auto;position:relative}
+.table-scroll{max-height:520px;overflow-y:auto}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media(max-width:768px){.grid-2{grid-template-columns:1fr}}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+@media(max-width:768px){.grid-2,.grid-3{grid-template-columns:1fr}}
 .customer-item{padding:12px 16px;border:1px solid var(--line);border-radius:var(--radius);margin-bottom:8px;cursor:pointer;transition:all .2s;background:var(--surface)}
 .customer-item:hover{border-color:var(--teal);background:var(--teal-soft)}
 .customer-item.selected{border-color:var(--teal);background:var(--teal-soft)}
 .customer-item .name{font-weight:600;font-size:14px}
 .customer-item .meta{font-size:12px;color:var(--ink-3)}
-.th-sort{cursor:pointer;user-select:none}
-.th-sort:hover{color:var(--teal)}
-.sort-ind{margin-left:5px;font-size:10px;color:var(--teal);font-weight:700}
-.filter-row th{top:41px;z-index:4;padding:6px 8px}
-.col-filter{width:100%;min-width:70px;padding:5px 8px;font-size:12px;background:var(--surface);border:1px solid var(--line);border-radius:6px;color:var(--ink);outline:none}
-.col-filter:focus{border-color:var(--teal)}
-.hint{font-size:11px;color:var(--ink-3);margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -113,6 +107,7 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 <div class="header-logo">OMI</div>
 <div><div class="header-title">Dashboard Input Order PT Olego Mandiri Indonesia</div><div class="header-subtitle">© 2026 NALAR. All rights reserved.</div></div>
 </div>
+<div style="font-size:12px;color:var(--ink-3)">Jurnal Mekari Export</div>
 </div>
 <div class="steps">
 <div class="step-item active" id="step-ind-1"><span class="step-num">1</span> Upload Data</div>
@@ -124,11 +119,11 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 <div class="section active" id="section-1">
 <div class="card">
 <div class="card-title">Upload Data</div>
-<div class="card-desc">Upload 3 file Excel. Master data otomatis dibaca dari Google Sheets.</div>
+<div class="card-desc">Upload 3 file Excel. Master Data otomatis dibaca dari Google Sheets.</div>
 <div class="upload-grid">
 <div class="upload-box" id="upload-order"><span class="upload-badge">Wajib</span><div class="upload-icon">📋</div><div class="upload-label">Form Order Customer</div><div class="upload-hint">Kategori | Kode | Deskripsi | Qty | Total</div><div class="upload-file" id="file-order-name"></div><input type="file" id="file-order" accept=".xlsx,.xls" data-type="order" class="file-input"></div>
-<div class="upload-box" id="upload-stock-pt"><span class="upload-badge">Wajib</span><div class="upload-icon">🏢</div><div class="upload-label">Stock PT</div><div class="upload-hint">Laporan Pergerakan Barang Gudang (Unassigned)</div><div class="upload-file" id="file-stock-pt-name"></div><input type="file" id="file-stock-pt" accept=".xlsx,.xls" data-type="stockPT" class="file-input"></div>
-<div class="upload-box" id="upload-stock-pribadi"><span class="upload-badge">Wajib</span><div class="upload-icon">🏠</div><div class="upload-label">Stock Pribadi</div><div class="upload-hint">Laporan Pergerakan Barang Gudang (OMI/HO/WRHS)</div><div class="upload-file" id="file-stock-pribadi-name"></div><input type="file" id="file-stock-pribadi" accept=".xlsx,.xls" data-type="stockPribadi" class="file-input"></div>
+<div class="upload-box" id="upload-stock-pt"><span class="upload-badge">Wajib</span><div class="upload-icon">🏢</div><div class="upload-label">Stock PT</div><div class="upload-hint">Gudang: Unassigned</div><div class="upload-file" id="file-stock-pt-name"></div><input type="file" id="file-stock-pt" accept=".xlsx,.xls" data-type="stockPT" class="file-input"></div>
+<div class="upload-box" id="upload-stock-pribadi"><span class="upload-badge">Wajib</span><div class="upload-icon">🏠</div><div class="upload-label">Stock Pribadi</div><div class="upload-hint">Gudang: OMI/HO/WRHS</div><div class="upload-file" id="file-stock-pribadi-name"></div><input type="file" id="file-stock-pribadi" accept=".xlsx,.xls" data-type="stockPribadi" class="file-input"></div>
 </div>
 <div id="upload-alert" class="mt-3"></div>
 <div class="mt-4"><button class="btn btn-primary" id="btn-process" disabled>Proses & Lanjut →</button></div>
@@ -152,30 +147,18 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 <div class="card">
 <div class="flex-between mb-4">
 <div><div class="card-title">📝 Review & Adjust Order</div><div class="card-desc" id="review-customer-info"></div></div>
-<div class="flex gap-2" style="align-items:center; flex-wrap:wrap;">
-<label class="input-label" style="margin:0; white-space:nowrap;">Sumber Stock:</label>
-<select id="stock-source-select" class="input-field" style="width:auto; min-width:180px; padding:8px 12px; margin:0;">
-<option value="ALL">Semua (PT + Pribadi)</option>
-<option value="PT">Stock PT Saja</option>
-<option value="PRIBADI">Stock Pribadi Saja</option>
-</select>
 <button class="btn btn-secondary btn-sm" id="btn-back-2">← Ganti Customer</button>
 </div>
-</div>
-<div class="grid-2 mb-4">
+<div class="grid-3 mb-4">
 <div class="input-group"><label class="input-label">Order Number *</label><input type="text" class="input-field" id="order-number" placeholder="Contoh: 100001"><div id="order-number-error" style="color:var(--danger);font-size:12px;margin-top:4px;display:none">⚠ Order Number wajib diisi!</div></div>
 <div class="input-group"><label class="input-label">Shipping Date (Optional)</label><input type="date" class="input-field" id="shipping-date"></div>
+<div class="input-group"><label class="input-label">Sumber Stock & Harga</label><select id="stock-source" class="input-field"><option value="ALL">Semua (PT + Pribadi)</option><option value="PT">Stock PT Saja</option><option value="PRIBADI">Stock Pribadi Saja</option></select></div>
 </div>
 <div class="summary-bar" id="review-summary"></div>
-<div class="hint">Klik header = sort (▲/▼) • Shift+Klik = multi-sort • Baris bawah header = filter (multi-kolom)</div>
-<div class="table-scroll">
-<div class="table-wrapper">
-<table>
+<div class="table-scroll"><div class="table-wrapper"><table>
 <thead id="review-thead"></thead>
 <tbody id="review-table-body"></tbody>
-</table>
-</div>
-</div>
+</table></div></div>
 <div id="review-alert" class="mt-3"></div>
 <div class="flex gap-2 mt-4">
 <button class="btn btn-secondary" id="btn-back-2b">← Kembali</button>
@@ -194,14 +177,10 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 </div>
 </div>
 <div class="summary-bar" id="preview-summary"></div>
-<div class="table-scroll" style="max-height:400px">
-<div class="table-wrapper">
-<table>
+<div class="table-scroll" style="max-height:400px"><div class="table-wrapper"><table>
 <thead><tr><th>#</th><th>*ProductName</th><th>Description</th><th>*Qty</th><th>*Unit</th><th>*UnitPrice</th><th>ProductDisc%</th><th>OrderDisc%</th><th>TaxName</th></tr></thead>
 <tbody id="preview-table-body"></tbody>
-</table>
-</div>
-</div>
+</table></div></div>
 <div class="flex gap-2 mt-4">
 <button class="btn btn-secondary" id="btn-back-3b">← Kembali</button>
 <button class="btn btn-primary" id="btn-download-bottom">⬇ Download Excel (.xlsx)</button>
@@ -225,8 +204,8 @@ const normKey=s=>s==null?'':String(s).toLowerCase().replace(/\s+/g,' ').trim();
 const dateToExcelSerial=d=>Math.floor((d-new Date(1899,11,30))/(24*60*60*1000));
 const todaySerial=()=>dateToExcelSerial(new Date());
 const formatCurrency=n=>{if(isNaN(n)||n===null)return'Rp 0';return'Rp '+Math.round(n).toLocaleString('id-ID')};
-function parsePrice(v){if(v==null||v==='')return 0;const n=parseFloat(String(v).trim().replace(/,/g,''));return isNaN(n)?0:n}
-function parseDiscount(v){if(!v&&v!==0)return 0;let s=String(v).trim().replace(/%/g,'').replace(/,/g,'.');const n=parseFloat(s);if(isNaN(n))return 0;return n>1?n/100:n}
+const parsePrice=v=>{if(v==null||v==='')return 0;const n=parseFloat(String(v).trim().replace(/,/g,''));return isNaN(n)?0:n};
+const parseDiscount=v=>{if(!v&&v!==0)return 0;const n=parseFloat(String(v).trim().replace(/%/g,'').replace(/,/g,'.'));if(isNaN(n))return 0;return n>1?n/100:n};
 
 function calculatePromoSplit(qty,promoType){
 if(promoType==='PASIR'||promoType==='NONE'||promoType==='SBO')return{paidQty:qty,freeQty:0,type:'NONE'};
@@ -262,49 +241,38 @@ box.addEventListener('drop',e=>{e.preventDefault();box.classList.remove('dragove
 document.querySelectorAll('.file-input').forEach(inp=>inp.addEventListener('change',function(){handleFileUpload(this,this.dataset.type)}));
 function checkUploadComplete(){document.getElementById('btn-process').disabled=!(state.fileData.order&&state.fileData.stockPT&&state.fileData.stockPribadi)}
 
-function parseCSVText(text){if(!text||text.trim()==='')return[];const rows=[];let cur=[],field='',inQ=false;for(let i=0;i<text.length;i++){const ch=text[i],nx=i+1<text.length?text[i+1]:'';if(inQ){if(ch==='"'&&nx==='"'){field+='"';i++}else if(ch==='"')inQ=false;else field+=ch}else{if(ch==='"')inQ=true;else if(ch===','){cur.push(field.trim());field=''}else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&nx==='\n')i++;cur.push(field.trim());field='';if(cur.some(f=>f!==''))rows.push(cur);cur=[]}else field+=ch}}cur.push(field.trim());if(cur.some(f=>f!==''))rows.push(cur);return rows}
-function csvToObjects(rows){if(!rows||rows.length<2)return[];const h=rows[0].map(x=>String(x==null?'':x).replace(/^\uFEFF/,'').trim());return rows.slice(1).map(r=>{const o={};h.forEach((k,i)=>{if(k)o[k]=r[i]!==undefined?r[i]:''});return o})}
 async function fetchGoogleSheets(){
 const sheets=['ProductList','CustomerList','PromoTier','ProductDiscountRules'];
 const res={};
 for(const s of sheets){
-try{const resp=await fetch(GSHEET_BASE+encodeURIComponent(s));if(!resp.ok){res[s]=[];continue}res[s]=csvToObjects(parseCSVText(await resp.text()))}catch(e){res[s]=[]}
+try{const resp=await fetch(GSHEET_BASE+encodeURIComponent(s));if(!resp.ok){res[s]=[];continue}
+const csv=await resp.text();
+res[s]=csvToObjects(parseCSVText(csv));
+}catch(e){res[s]=[]}
 }
 return res;
 }
+function parseCSVText(text){if(!text||text.trim()==='')return[];const rows=[];let cur=[],field='',inQ=false;for(let i=0;i<text.length;i++){const ch=text[i],nx=i+1<text.length?text[i+1]:'';if(inQ){if(ch==='"'&&nx==='"'){field+='"';i++}else if(ch==='"')inQ=false;else field+=ch}else{if(ch==='"')inQ=true;else if(ch===','){cur.push(field.trim());field=''}else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&nx==='\n')i++;cur.push(field.trim());field='';if(cur.some(f=>f!==''))rows.push(cur);cur=[]}else field+=ch}}cur.push(field.trim());if(cur.some(f=>f!==''))rows.push(cur);return rows}
+function csvToObjects(rows){if(!rows||rows.length<2)return[];const h=rows[0].map(x=>String(x==null?'':x).replace(/^\uFEFF/,'').trim());return rows.slice(1).map(r=>{const o={};h.forEach((k,i)=>{if(k)o[k]=r[i]!==undefined?r[i]:''});return o})}
 
 function parseStockFile(data,target){
-const byName={},byCode={};
-if(!data||!Array.isArray(data))return{byName,byCode};
+const out={};if(!data||!Array.isArray(data))return out;
 let wh='',hIdx=-1,nIdx=1,qIdx=6;
-for(let i=0;i<Math.min(data.length,50);i++){const r=data[i];if(!r||!Array.isArray(r))continue;const low=r.map(c=>c==null?'':String(c).toLowerCase().trim());if(low.some(c=>c.includes('kode produk'))){hIdx=i;nIdx=low.findIndex(c=>c.includes('nama'));if(nIdx===-1)nIdx=1;qIdx=low.findIndex(c=>c.includes('akhir'));if(qIdx===-1)qIdx=6;break}}
-if(hIdx===-1)return{byName,byCode};
+for(let i=0;i<Math.min(data.length,50);i++){if(!data[i]||!Array.isArray(data[i]))continue;const low=data[i].map(c=>c==null?'':String(c).toLowerCase().trim());if(low.some(c=>c.includes('kode produk'))){hIdx=i;nIdx=low.findIndex(c=>c.includes('nama'));if(nIdx===-1)nIdx=1;qIdx=low.findIndex(c=>c.includes('akhir'));if(qIdx===-1)qIdx=6;break}}
+if(hIdx===-1)return out;
 for(let i=hIdx+1;i<data.length;i++){const r=data[i];if(!r||!Array.isArray(r))continue;
 const c0=r[0]==null?'':String(r[0]).trim();const c1=(nIdx<r.length&&r[nIdx]!=null)?String(r[nIdx]).trim():'';
 if(!c0&&!c1)continue;
 const rowStr=r.map(c=>c==null?'':String(c).toLowerCase()).join('|');if(rowStr.includes('subtotal')||rowStr.includes('grand total'))continue;
 if(c0!==''&&c1===''){wh=c0;continue}
-if(c0!==''&&c1!==''&&wh.toLowerCase().trim()===target.toLowerCase().trim()){
-const qty=parseFloat(r[qIdx])||0;
-byName[c1]=(byName[c1]||0)+qty;
-if(c0)byCode[normKey(c0)]=(byCode[normKey(c0)]||0)+qty;
+if(c0!==''&&c1!==''&&wh.toLowerCase().trim()===target.toLowerCase().trim()){const q=parseFloat(r[qIdx])||0;const nk=normKey(c1);out[nk]=(out[nk]||0)+q}
 }
+return out;
 }
-return{byName,byCode};
-}
-function findStock(stock,product){
-if(!stock||!product)return 0;
-const tryNames=[product.ProductName,product.Description];
-for(const k of tryNames){
-if(!k)continue;
-if(stock.byName[k]!=null)return stock.byName[k];
-const nk=normKey(k);
-for(const bk in stock.byName){if(normKey(bk)===nk)return stock.byName[bk]}
-}
-if(product.Kode){
-const ck=normKey(product.Kode);
-if(stock.byCode[ck]!=null)return stock.byCode[ck];
-}
+function getStockQty(map,product){
+if(!map||!product)return 0;
+const a=map[normKey(product.ProductName)];if(a!==undefined)return a;
+const b=map[normKey(product.Description)];if(b!==undefined)return b;
 return 0;
 }
 
@@ -313,15 +281,16 @@ const items=[];if(!data||!Array.isArray(data))return items;let h=-1;
 for(let i=0;i<Math.min(data.length,30);i++){if(!data[i]||!Array.isArray(data[i]))continue;const j=data[i].map(c=>c==null?'':String(c).toLowerCase().trim()).join('|');if(j.includes('deskripsi')&&j.includes('qty')){h=i;break}}
 if(h===-1)return items;
 const hd=data[h].map(x=>x==null?'':String(x).toLowerCase().trim());
-const kI=hd.findIndex(x=>x.includes('kode')),dI=hd.findIndex(x=>x.includes('deskripsi')),qI=hd.findIndex(x=>x.includes('qty'));
-if(dI===-1||qI===-1)return items;
-for(let i=h+1;i<data.length;i++){const r=data[i];if(!r||!Array.isArray(r)||!r.length)continue;
+const kI=hd.findIndex(x=>x.includes('kode')),dI=hd.findIndex(x=>x.includes('deskripsi')),qI=hd.findIndex(x=>h.includes('qty')?x.includes('qty'):false);
+const qtyIdx=hd.findIndex(x=>x.includes('qty'));
+if(dI===-1||qtyIdx===-1)return items;
+data.slice(h+1).forEach(r=>{if(!r||!Array.isArray(r)||!r.length)return;
 const kode=kI>=0&&r[kI]!=null?String(r[kI]).trim():'';
-const desk=dI>=0&&r[dI]!=null?String(r[dI]).trim():'';
-const qty=parseInt(r[qI])||0;
-if(normalizeStr(desk).includes('error')||normalizeStr(desk).includes('#n/a'))continue;
+const desk=r[dI]!=null?String(r[dI]).trim():'';
+const qty=parseInt(r[qtyIdx])||0;
+if(normalizeStr(desk).includes('error')||normalizeStr(desk).includes('#n/a'))return;
 if(desk&&qty>0)items.push({kode,deskripsi:desk,qty});
-}
+});
 return items;
 }
 
@@ -338,20 +307,20 @@ const orderItems=parseFormOrder(state.fileData.order);
 if(!orderItems.length){alertEl.innerHTML='<div class="alert alert-error">❌ Tidak ada item valid di Form Order.</div>';return}
 const merged=new Map();
 orderItems.forEach(r=>{
-const product=state.gsheetData.productList.find(p=>normKey(p.Description)===normKey(r.deskripsi))||state.gsheetData.productList.find(p=>normKey(p.Kode)===normKey(r.kode));
+const product=state.gsheetData.productList.find(p=>normKey(p.Kode)===normKey(r.kode))||state.gsheetData.productList.find(p=>normKey(p.Description)===normKey(r.deskripsi));
 const key=product?('P|'+normKey(product.Description)):('N|'+normKey(r.deskripsi));
 if(merged.has(key)){merged.get(key).qty+=r.qty}else{merged.set(key,{kode:r.kode,deskripsi:r.deskripsi,qty:r.qty,product:product||null})}
 });
 state.processedItems=[...merged.values()].map(m=>{
 const p=m.product;
-if(!p)return{kode:m.kode,deskripsi:m.deskripsi,qty:m.qty,found:false,productName:m.deskripsi,productCode:m.kode,description:m.deskripsi,unit:'Pcs',promoType:'NONE',nettPriceOutput:'NettSellPricePPN',netSellPrice:0,netSellPricePPN:0,stockPT:0,stockPribadi:0,totalStock:0,promoEnabled:true,hasTierWarning:false};
-const a=findStock(sPT,p),b=findStock(sPr,p);
+if(!p)return{kode:m.kode,deskripsi:m.deskripsi,qty:m.qty,found:false,productName:m.deskripsi,productCode:m.kode,description:m.deskripsi,unit:'Pcs',promoType:'NONE',nettPriceOutput:'NettSellPricePPN',netSellPrice:0,netSellPricePPN:0,netSellPricePribadi:0,stockPT:0,stockPribadi:0,totalStock:0,promoEnabled:true,hasTierWarning:false};
+const a=getStockQty(sPT,p),b=getStockQty(sPr,p);
 const promoType=(p.PromoType||'').trim().toUpperCase();
 let hasTierWarning=false;
 if(promoType==='TIER'||promoType==='PASIR'){if(!state.gsheetData.promoTier.some(t=>normKey(t.Deskripsi)===normKey(p.Description)))hasTierWarning=true}
-return{kode:m.kode,deskripsi:m.deskripsi,qty:m.qty,found:true,productName:p.ProductName||p.Description||m.deskripsi,productCode:p.ProductCode||p.Kode||m.kode,description:p.Description||m.deskripsi,unit:p.Unit||'Pcs',promoType,nettPriceOutput:(p.NettPriceOutput||'NettSellPricePPN').trim(),netSellPrice:parsePrice(p.NetSellPrice),netSellPricePPN:parsePrice(p.NetSellPricePPN),stockPT:a,stockPribadi:b,totalStock:a+b,promoEnabled:true,hasTierWarning};
+return{kode:m.kode,deskripsi:m.deskripsi,qty:m.qty,found:true,productName:p.ProductName||p.Description||m.deskripsi,productCode:p.ProductCode||p.Kode||m.kode,description:p.Description||m.deskripsi,unit:p.Unit||'Pcs',promoType,nettPriceOutput:(p.NettPriceOutput||'NettSellPricePPN').trim(),netSellPrice:parsePrice(p.NetSellPrice),netSellPricePPN:parsePrice(p.NetSellPricePPN),netSellPricePribadi:parsePrice(p.NetSellPricePribadi),stockPT:a,stockPribadi:b,totalStock:a+b,promoEnabled:true,hasTierWarning};
 });
-alertEl.innerHTML=`<div class="alert alert-success">✅ ${orderItems.length} item diproses. Lanjut pilih customer.</div>`;
+alertEl.innerHTML=`<div class="alert alert-success">✅ ${state.processedItems.length} item diproses.</div>`;
 setTimeout(()=>{goToStep(2);renderCustomerList()},800);
 }catch(err){alertEl.innerHTML=`<div class="alert alert-error">❌ Error: ${err.message}</div>`}
 }
@@ -362,11 +331,19 @@ if(!list.length){c.innerHTML='<div class="alert alert-warning">CustomerList koso
 c.innerHTML=list.map((x,i)=>`<div class="customer-item" data-idx="${i}"><div class="name">${x.CustomerName||'N/A'}</div><div class="meta">Area: ${x.Area||'-'} | Disc: ${parseDiscount(x.DiscountRate)*100}% | Due: ${x.DueDateDays||'30'} hari</div></div>`).join('');
 c.querySelectorAll('.customer-item').forEach(el=>el.addEventListener('click',()=>{state.selectedCustomer=parseInt(el.dataset.idx);c.querySelectorAll('.customer-item').forEach(e=>e.classList.remove('selected'));el.classList.add('selected');document.getElementById('btn-to-step3').disabled=false}));
 }
-document.getElementById('customer-search').addEventListener('input',function(){const q=normalizeStr(this.value);document.querySelectorAll('.customer-item').forEach(el=>{const idx=parseInt(el.dataset.idx);const x=state.gsheetData.customerList[idx];if(!x)return;el.style.display=normalizeStr(x.CustomerName).includes(q)?'block':'none'})});
+document.getElementById('customer-search').addEventListener('input',function(){const q=normalizeStr(this.value);document.querySelectorAll('.customer-item').forEach((el,i)=>{const x=state.gsheetData.customerList[i];if(!x)return;el.style.display=normalizeStr(x.CustomerName).includes(q)?'block':'none'})});
+
+function getEffectiveStock(item){
+if(state.stockSource==='PT')return item.stockPT;
+if(state.stockSource==='PRIBADI')return item.stockPribadi;
+return item.stockPT+item.stockPribadi;
+}
 
 function calculatePrice(item,customer){
 if(!item.found)return{unitPrice:0};
-const area=(customer.Area||'').trim().toUpperCase();
+// Harga pribadi kalau sumber stock = Pribadi
+if(state.stockSource==='PRIBADI'&&item.netSellPricePribadi>0)return{unitPrice:Math.round(item.netSellPricePribadi)};
+const area=(customer.Area||'').toUpperCase();
 if(item.promoType==='TIER'||item.promoType==='PASIR'){
 const tiers=state.gsheetData.promoTier.filter(t=>normKey(t.Deskripsi)===normKey(item.description));
 if(tiers.length){
@@ -382,6 +359,7 @@ if(!isNaN(p)&&p>0)return{unitPrice:Math.round(p)};
 }
 return{unitPrice:Math.round(item.nettPriceOutput==='NettSellPrice'?item.netSellPrice:item.netSellPricePPN)};
 }
+
 function getProductDiscount(item){
 if(!item.promoEnabled)return 0;
 const rules=state.gsheetData.discountRules.filter(r=>normKey(r.Deskripsi)===normKey(item.description));
@@ -392,78 +370,73 @@ return m?parseDiscount(m.ProductDiscRate):0;
 }
 function getPromoInfo(item){
 if(!item.found||!item.promoEnabled)return'No Promo';
-const promoType=item.promoType;
-const parts=[];
-if(promoType==='PASIR'){if(item.qty>0)parts.push('Promo Tier Pasir');}
-else if(promoType==='TIER'){if(item.qty>0)parts.push('Promo Tier Tissue');}
-const disc=getProductDiscount(item);
-if(disc>0)parts.push('Promo '+ (disc*100) +'%');
-if(promoType!=='PASIR'&&promoType!=='NONE'&&promoType!=='SBO'){
-const s=calculatePromoSplit(item.qty,promoType);
-if(s.freeQty>0)parts.push('Buy11Get1 (Bayar '+s.paidQty+', Free '+s.freeQty+')');
-}
-return parts.length?parts.join(' + '):'No Promo';
+if(item.promoType==='NONE')return'No Promo';
+if(item.promoType==='PASIR')return`Promo Tier Pasir (Qty ${item.qty})`;
+if(item.promoType==='TIER')return`Promo Tier Tissue (Qty ${item.qty})`;
+const d=getProductDiscount(item);
+if(d>0)return`Promo ${d*100}%`;
+const s=calculatePromoSplit(item.qty,item.promoType);
+if(s.freeQty>0)return`Buy11Get1 (Bayar ${s.paidQty}, Free ${s.freeQty})`;
+return'No Promo';
 }
 
 function buildReviewHeader(){
-    const stockLabel = state.stockSource === 'PT' ? 'Stock Aktif (PT)' : (state.stockSource === 'PRIBADI' ? 'Stock Aktif (Pribadi)' : 'Total Stock (Semua)');
-    const COLS=[
-        {key:'promo',label:'Promo',type:'none'},
-        {key:'productCode',label:'Kode',type:'text'},
-        {key:'productName',label:'Product Name',type:'text'},
-        {key:'qty',label:'Order Qty',type:'num'},
-        {key:'stockPT',label:'Stock PT',type:'num'},
-        {key:'stockPribadi',label:'Stock Pribadi',type:'num'},
-        {key:'effectiveStock',label:stockLabel,type:'num'},
-        {key:'status',label:'Status',type:'text'},
-        {key:'promoInfo',label:'Promo Info',type:'text'},
-        {key:'unitPrice',label:'Unit Price',type:'num'},
-        {key:'totalPrice',label:'Total Price',type:'num'}
-    ];
-    const thead=document.getElementById('review-thead');
-    thead.innerHTML=`<tr>${COLS.map(c=>c.type==='none'?`<th>${c.label}</th>`:`<th class="th-sort" data-key="${c.key}">${c.label}<span class="sort-ind" data-ind="${c.key}"></span></th>`).join('')}</tr>
-    <tr class="filter-row">${COLS.map(c=>c.type==='none'?'<th></th>':`<th><input class="col-filter" data-key="${c.key}" placeholder="Filter…"></th>`).join('')}</tr>`;
-    thead.querySelectorAll('.th-sort').forEach(th=>th.addEventListener('click',onSortClick));
-    let timer=null;
-    thead.querySelectorAll('.col-filter').forEach(inp=>inp.addEventListener('input',e=>{state.filters[e.target.dataset.key]=e.target.value;clearTimeout(timer);timer=setTimeout(()=>renderReviewTable(),350)}));
+const thead=document.getElementById('review-thead');
+const cols=[
+{key:'promo',label:'Promo',type:'none'},
+{key:'productCode',label:'Kode',type:'text'},
+{key:'productName',label:'Product Name',type:'text'},
+{key:'qty',label:'Order Qty',type:'num'},
+{key:'stockPT',label:'Stock PT',type:'num'},
+{key:'stockPribadi',label:'Stock Pribadi',type:'num'},
+{key:'totalStock',label:'Stock Aktif',type:'num'},
+{key:'status',label:'Status',type:'text'},
+{key:'promoInfo',label:'Promo Info',type:'text'},
+{key:'unitPrice',label:'Unit Price',type:'num'},
+{key:'totalPrice',label:'Total Price',type:'num'}
+];
+thead.innerHTML=`<tr>${cols.map(c=>c.type==='none'?`<th>${c.label}</th>`:`<th class="th-sort" data-key="${c.key}">${c.label}<span class="sort-ind" data-ind="${c.key}"></span></th>`).join('')}</tr>
+<tr class="filter-row">${cols.map(c=>c.type==='none'?'<th></th>':`<th><input class="col-filter" data-key="${c.key}" placeholder="Filter…"></th>`).join('')}</tr>`;
+thead.querySelectorAll('.th-sort').forEach(th=>th.addEventListener('click',onSortClick));
+let t=null;
+thead.querySelectorAll('.col-filter').forEach(inp=>inp.addEventListener('input',e=>{state.filters[e.target.dataset.key]=e.target.value;clearTimeout(t);t=setTimeout(renderReviewTable,350)}));
 }
 function onSortClick(e){
 const key=e.currentTarget.dataset.key;
-if(e.shiftKey){const ex=state.sorts.find(s=>s.key===key);if(ex){ex.dir*=-1}else{state.sorts.push({key,dir:1})}}
+if(e.shiftKey){const ex=state.sorts.find(s=>s.key===key);if(ex)ex.dir*=-1;else state.sorts.push({key,dir:1})}
 else{const ex=state.sorts.find(s=>s.key===key);
-if(ex&&state.sorts.length===1){if(ex.dir===1){ex.dir=-1}else{state.sorts=[]}}else{state.sorts=[{key,dir:1}]}}
+if(ex&&state.sorts.length===1){if(ex.dir===1)ex.dir=-1;else state.sorts=[]}else state.sorts=[{key,dir:1}]}
 updateSortIndicators();renderReviewTable();
 }
 function updateSortIndicators(){
-document.querySelectorAll('.sort-ind').forEach(sp=>{const key=sp.dataset.ind;const i=state.sorts.findIndex(s=>s.key===key);if(i===-1){sp.textContent='';return}const s=state.sorts[i];sp.textContent=(s.dir===1?'▲':'▼')+(state.sorts.length>1?(i+1):'')});
+document.querySelectorAll('.sort-ind').forEach(sp=>{const k=sp.dataset.ind;const i=state.sorts.findIndex(s=>s.key===k);if(i===-1){sp.textContent='';return}const s=state.sorts[i];sp.textContent=(s.dir===1?'▲':'▼')+(state.sorts.length>1?(i+1):'')});
 }
 function getVal(r,key){
 const it=r.item,d=r.d;
 switch(key){
-case 'productCode': return it.productCode||'';
-case 'productName': return it.productName||'';
-case 'qty': return it.qty;
-case 'stockPT': return it.stockPT;
-case 'stockPribadi': return it.stockPribadi;
-case 'effectiveStock': return d.effectiveStock;
-case 'totalStock': return it.totalStock;
-case 'status': return d.status;
-case 'promoInfo': return d.promoInfo;
-case 'unitPrice': return d.unitPrice;
-case 'totalPrice': return d.totalPrice;
-default: return '';
+case'productCode':return it.productCode||'';
+case'productName':return it.productName||'';
+case'qty':return it.qty;
+case'stockPT':return it.stockPT;
+case'stockPribadi':return it.stockPribadi;
+case'totalStock':return d.effectiveStock;
+case'status':return d.status;
+case'promoInfo':return d.promoInfo;
+case'unitPrice':return d.unitPrice;
+case'totalPrice':return d.totalPrice;
+default:return'';
 }
 }
 
 function renderReviewTable(){
 const customer=state.gsheetData.customerList[state.selectedCustomer];if(!customer)return;
-document.getElementById('review-customer-info').textContent=`Customer: ${customer.CustomerName} | Area: ${customer.Area} | Discount: ${parseDiscount(customer.DiscountRate)*100}%`;
+document.getElementById('review-customer-info').textContent=`Customer: ${customer.CustomerName} | Area: ${customer.Area} | Disc: ${parseDiscount(customer.DiscountRate)*100}% | Sumber: ${{ALL:'PT+Pribadi',PT:'PT',PRIBADI:'Pribadi'}[state.stockSource]}`;
 let rows=state.processedItems.map((item,idx)=>({item,idx,d:derive(item,customer)}));
 let avail=0,low=0,notAvail=0;
 rows.forEach(r=>{if(r.d.status==='Available')avail++;else if(r.d.status==='Low Stock')low++;else if(r.d.status==='Not Available')notAvail++});
 const af=Object.entries(state.filters).filter(([k,v])=>v&&v.trim()!=='');
-if(af.length){rows=rows.filter(r=>af.every(([k,v])=>String(getVal(r,k)).toLowerCase().includes(v.toLowerCase().trim())))}
-if(state.sorts.length){rows.sort((a,b)=>{for(const s of state.sorts){const col=['qty','stockPT','stockPribadi','effectiveStock','totalStock','unitPrice','totalPrice'].includes(s.key)?'num':'text';const va=getVal(a,s.key),vb=getVal(b,s.key);let cmp=0;if(col==='num'){cmp=(parseFloat(va)||0)-(parseFloat(vb)||0)}else{cmp=String(va).localeCompare(String(vb))}if(cmp!==0)return cmp*s.dir}return a.idx-b.idx})}
+if(af.length)rows=rows.filter(r=>af.every(([k,v])=>String(getVal(r,k)).toLowerCase().includes(v.toLowerCase().trim())));
+if(state.sorts.length)rows.sort((a,b)=>{for(const s of state.sorts){const col=['qty','stockPT','stockPribadi','totalStock','unitPrice','totalPrice'].includes(s.key)?'num':'text';const va=getVal(a,s.key),vb=getVal(b,s.key);const cmp=col==='num'?(parseFloat(va)||0)-(parseFloat(vb)||0):String(va).localeCompare(String(vb));if(cmp!==0)return cmp*s.dir}return a.idx-b.idx});
 const tbody=document.getElementById('review-table-body');
 tbody.innerHTML=rows.map(r=>{
 const it=r.item,d=r.d;
@@ -473,19 +446,12 @@ const rowCls=d.status==='Not Available'?'row-danger':(d.status==='Low Stock'?'ro
 const badge=isAvail?'badge-success':(d.status==='Low Stock'?'badge-warning':'badge-danger');
 const qtyCls=d.status==='Not Available'?'qty-input qty-grey':'qty-input';
 const warn=it.hasTierWarning?' <span class="badge badge-warning">⚠ Tier missing</span>':'';
-
-let stockPtStyle = state.stockSource === 'PT' ? 'font-weight:700; color:var(--teal); background:var(--teal-soft);' : '';
-let stockPrStyle = state.stockSource === 'PRIBADI' ? 'font-weight:700; color:var(--teal); background:var(--teal-soft);' : '';
-let stockEffStyle = state.stockSource === 'ALL' ? 'font-weight:700;' : 'font-weight:700; color:var(--teal); background:var(--teal-soft);';
-
 return`<tr class="${rowCls}">
 <td><div class="toggle-wrapper"><div class="toggle ${it.promoEnabled?'active':''}" data-toggle="${r.idx}"></div></div></td>
 <td style="font-size:11px;color:var(--ink-3)">${it.productCode}</td>
 <td style="font-weight:500">${it.productName}</td>
 <td><input type="number" class="${qtyCls}" value="${it.qty}" min="0" data-idx="${r.idx}"></td>
-<td style="${stockPtStyle}">${it.stockPT}</td>
-<td style="${stockPrStyle}">${it.stockPribadi}</td>
-<td style="${stockEffStyle}">${d.effectiveStock}</td>
+<td>${it.stockPT}</td><td>${it.stockPribadi}</td><td style="font-weight:700">${d.effectiveStock}</td>
 <td><span class="badge ${badge}">${d.status}</span></td>
 <td><span class="promo-tag">${d.promoInfo}</span>${warn}</td>
 <td style="font-weight:600">${formatCurrency(d.unitPrice)}</td>
@@ -501,14 +467,11 @@ tbody.querySelectorAll('.qty-input').forEach(inp=>inp.addEventListener('change',
 tbody.querySelectorAll('.toggle').forEach(tog=>tog.addEventListener('click',function(){const i=this.dataset.toggle;state.processedItems[i].promoEnabled=!state.processedItems[i].promoEnabled;renderReviewTable()}));
 }
 function derive(item,customer){
-    let effectiveStock = item.totalStock;
-    if (state.stockSource === 'PT') effectiveStock = item.stockPT;
-    else if (state.stockSource === 'PRIBADI') effectiveStock = item.stockPribadi;
-
-    const status=!item.found?'Not Found':(effectiveStock===0?'Not Available':(effectiveStock<item.qty?'Low Stock':'Available'));
-    const unitPrice=calculatePrice(item,customer).unitPrice;
-    const s=item.promoEnabled?calculatePromoSplit(item.qty,item.promoType):{paidQty:item.qty,freeQty:0};
-    return {status,unitPrice,paidQty:s.paidQty,totalPrice:s.paidQty*unitPrice,promoInfo:getPromoInfo(item),effectiveStock};
+const effectiveStock=getEffectiveStock(item);
+const status=!item.found?'Not Found':(effectiveStock===0?'Not Available':(effectiveStock<item.qty?'Low Stock':'Available'));
+const unitPrice=calculatePrice(item,customer).unitPrice;
+const s=item.promoEnabled?calculatePromoSplit(item.qty,item.promoType):{paidQty:item.qty,freeQty:0};
+return{effectiveStock,status,unitPrice,paidQty:s.paidQty,totalPrice:s.paidQty*unitPrice,promoInfo:getPromoInfo(item)};
 }
 
 function generatePreview(){
@@ -522,23 +485,16 @@ const dueDateSerial=orderDateSerial+(parseInt(customer.DueDateDays)||30);
 const sd=document.getElementById('shipping-date').value;
 const shippingDateSerial=sd?dateToExcelSerial(new Date(sd)):'';
 const customerDiscount=parseDiscount(customer.DiscountRate);
-let isFirstRow=true;const rows=[];
+const rows=[];let isFirstRow=true;
 state.processedItems.forEach(item=>{
 if(!item.found||item.qty<=0)return;
-
-let effectiveStock = item.totalStock;
-if (state.stockSource === 'PT') effectiveStock = item.stockPT;
-else if (state.stockSource === 'PRIBADI') effectiveStock = item.stockPribadi;
-
-if(effectiveStock===0)return;
-
+if(getEffectiveStock(item)===0)return;
 const priceInfo=calculatePrice(item,customer);
 const productDiscount=getProductDiscount(item);
 const s=item.promoEnabled?calculatePromoSplit(item.qty,item.promoType):{paidQty:item.qty,freeQty:0};
-rows.push({customer:customer.CustomerName,email:FIXED_EMAIL,billingAddress:customer.BillingAddress||'',shippingAddress:customer.ShippingAddress||'',orderDate:orderDateSerial,dueDate:dueDateSerial,shippingDate:shippingDateSerial,orderNumber,message:FIXED_MESSAGE,productName:item.productName,description:item.description,quantity:s.paidQty,unit:item.unit,unitPrice:priceInfo.unitPrice,productDiscountRate:productDiscount? (productDiscount*100):'',orderDiscount:customerDiscount? (customerDiscount*100)+'%':'',taxName:isFirstRow?'VAT -':''});
-isFirstRow=false;
+rows.push({customer:customer.CustomerName,email:FIXED_EMAIL,billingAddress:customer.BillingAddress||'',shippingAddress:customer.ShippingAddress||'',orderDate:orderDateSerial,dueDate:dueDateSerial,shippingDate:shippingDateSerial,orderNumber,message:FIXED_MESSAGE,productName:item.productName,description:item.description,quantity:s.paidQty,unit:item.unit,unitPrice:priceInfo.unitPrice,productDiscountRate:productDiscount?productDiscount*100:'',orderDiscount:customerDiscount?customerDiscount*100+'%':'',taxName:'VAT -'});
 if(s.freeQty>0){
-rows.push({customer:customer.CustomerName,email:FIXED_EMAIL,billingAddress:customer.BillingAddress||'',shippingAddress:customer.ShippingAddress||'',orderDate:orderDateSerial,dueDate:dueDateSerial,shippingDate:shippingDateSerial,orderNumber,message:FIXED_MESSAGE,productName:item.productName,description:item.description,quantity:s.freeQty,unit:item.unit,unitPrice:0,productDiscountRate:productDiscount? (productDiscount*100):'',orderDiscount:customerDiscount? (customerDiscount*100)+'%':'',taxName:''});
+rows.push({customer:customer.CustomerName,email:FIXED_EMAIL,billingAddress:customer.BillingAddress||'',shippingAddress:customer.ShippingAddress||'',orderDate:orderDateSerial,dueDate:dueDateSerial,shippingDate:shippingDateSerial,orderNumber,message:FIXED_MESSAGE,productName:item.productName,description:item.description,quantity:s.freeQty,unit:item.unit,unitPrice:0,productDiscountRate:productDiscount?productDiscount*100:'',orderDiscount:customerDiscount?customerDiscount*100+'%':'',taxName:'VAT -'});
 }
 });
 state.outputRows=rows;renderPreview(rows,customer);goToStep(4);
@@ -566,6 +522,7 @@ XLSX.writeFile(wb,`SalesOrder_${name}_${new Date().toISOString().split('T')[0]}.
 }
 
 buildReviewHeader();
+document.getElementById('stock-source').addEventListener('change',function(){state.stockSource=this.value;renderReviewTable()});
 document.getElementById('btn-process').addEventListener('click',processData);
 document.getElementById('btn-back-1').addEventListener('click',()=>goToStep(1));
 document.getElementById('btn-to-step3').addEventListener('click',()=>goToStep(3));
@@ -577,13 +534,6 @@ document.getElementById('btn-back-3b').addEventListener('click',()=>goToStep(3))
 document.getElementById('btn-download-top').addEventListener('click',downloadExcel);
 document.getElementById('btn-download-bottom').addEventListener('click',downloadExcel);
 document.getElementById('order-number').addEventListener('input',function(){if(this.value.trim()){this.classList.remove('input-error');document.getElementById('order-number-error').style.display='none'}});
-
-document.getElementById('stock-source-select').addEventListener('change', function(){
-    state.stockSource = this.value;
-    buildReviewHeader();
-    renderReviewTable();
-});
-
 });
 </script>
 </body>
