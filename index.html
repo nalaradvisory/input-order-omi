@@ -273,7 +273,6 @@ try{const resp=await fetch(GSHEET_BASE+encodeURIComponent(s));if(!resp.ok){res[s
 return res;
 }
 
-// [FIXED] Hapus parameter target, baca semua gudang yang ada di Excel
 function parseStockFile(data){
 const byName={},byCode={};
 if(!data||!Array.isArray(data))return{byName,byCode};
@@ -284,11 +283,7 @@ for(let i=hIdx+1;i<data.length;i++){const r=data[i];if(!r||!Array.isArray(r))con
 const c0=r[0]==null?'':String(r[0]).trim();const c1=(nIdx<r.length&&r[nIdx]!=null)?String(r[nIdx]).trim():'';
 if(!c0&&!c1)continue;
 const rowStr=r.map(c=>c==null?'':String(c).toLowerCase()).join('|');if(rowStr.includes('subtotal')||rowStr.includes('grand total'))continue;
-
-// Skip baris header gudang (c0 ada isinya, c1 kosong)
 if(c0!==''&&c1==='') continue;
-
-// Masukkan semua item tanpa peduli nama gudangnya
 if(c0!==''&&c1!==''){
 const qty=parseFloat(r[qIdx])||0;
 byName[c1]=(byName[c1]||0)+qty;
@@ -341,21 +336,39 @@ const sheets=await fetchGoogleSheets();
 state.gsheetData={productList:sheets.ProductList||[],customerList:sheets.CustomerList||[],promoTier:sheets.PromoTier||[],discountRules:sheets.ProductDiscountRules||[]};
 if(!state.gsheetData.productList.length){alertEl.innerHTML='<div class="alert alert-warning">⚠ Gagal mengambil ProductList (CORS/Offline). Fallback ke pembacaan Excel langsung.</div>';}
 
-// [FIXED] Panggil tanpa parameter target
 const sPT=parseStockFile(state.fileData.stockPT);
 const sPr=parseStockFile(state.fileData.stockPribadi);
 const orderItems=parseFormOrder(state.fileData.order);
 if(!orderItems.length){alertEl.innerHTML='<div class="alert alert-error">❌ Tidak ada item valid di Form Order.</div>';return}
 const merged=new Map();
 orderItems.forEach(r=>{
-const product=state.gsheetData.productList.find(p=>normKey(p.Description)===normKey(r.deskripsi))||state.gsheetData.productList.find(p=>normKey(p.Kode)===normKey(r.kode));
-const key=product?('P|'+normKey(product.Description)):('N|'+normKey(r.deskripsi));
-if(merged.has(key)){merged.get(key).qty+=r.qty}else{merged.set(key,{kode:r.kode,deskripsi:r.deskripsi,qty:r.qty,product:product||null})}
+    const rDesc = normKey(r.deskripsi);
+    const rKode = normKey(r.kode);
+    
+    // Crosscheck Logic: Always check Description AND Kode
+    const product = state.gsheetData.productList.find(p => {
+        const pDesc = normKey(p.Description);
+        const pName = normKey(p.ProductName);
+        const pKode = normKey(p.Kode || p.ProductCode);
+        
+        let descMatch = rDesc && (pDesc === rDesc || pName === rDesc);
+        let codeMatch = rKode && pKode === rKode;
+        
+        // If both are provided in order form, prioritize exact match on both
+        if (rDesc && rKode) {
+            if (descMatch && codeMatch) return true;
+        }
+        // Fallback: match on either if available
+        if (descMatch || codeMatch) return true;
+        
+        return false;
+    });
+
+    const key=product?('P|'+normKey(product.Description||product.ProductName)):('N|'+rDesc);
+    if(merged.has(key)){merged.get(key).qty+=r.qty}else{merged.set(key,{kode:r.kode,deskripsi:r.deskripsi,qty:r.qty,product:product||null})}
 });
 state.processedItems=[...merged.values()].map(m=>{
 const p=m.product;
-
-// [FIXED] Logika Fallback: Kalau GSheet tidak ada, cari langsung di Excel pakai nama dari Form Order
 let a = p ? findStock(sPT, p) : 0;
 let b = p ? findStock(sPr, p) : 0;
 
@@ -367,11 +380,11 @@ if (a === 0 && b === 0) {
     if (fallbackB > 0) b = fallbackB;
 }
 
-if(!p)return{kode:m.kode,deskripsi:m.deskripsi,qty:m.qty,found:false,productName:m.deskripsi,productCode:m.kode,description:m.deskripsi,unit:'Pcs',promoType:'NONE',nettPriceOutput:'NettSellPricePPN',netSellPrice:0,netSellPricePPN:0,stockPT:a,stockPribadi:b,totalStock:a+b,promoEnabled:true,hasTierWarning:false};
+if(!p)return{kode:m.kode,deskripsi:m.deskripsi,qty:m.qty,found:false,productName:m.deskripsi,productCode:m.kode,description:m.deskripsi,unit:'Pcs',promoType:'NONE',nettPriceOutput:'NettSellPricePPN',netSellPrice:0,netSellPricePPN:0,netSellPricePribadi:0,stockPT:a,stockPribadi:b,totalStock:a+b,promoEnabled:true,hasTierWarning:false};
 const promoType=(p.PromoType||'').trim().toUpperCase();
 let hasTierWarning=false;
 if(promoType==='TIER'||promoType==='PASIR'){if(!state.gsheetData.promoTier.some(t=>normKey(t.Deskripsi)===normKey(p.Description)))hasTierWarning=true}
-return{kode:m.kode,deskripsi:m.deskripsi,qty:m.qty,found:true,productName:p.ProductName||p.Description||m.deskripsi,productCode:p.ProductCode||p.Kode||m.kode,description:p.Description||m.deskripsi,unit:p.Unit||'Pcs',promoType,nettPriceOutput:(p.NettPriceOutput||'NettSellPricePPN').trim(),netSellPrice:parsePrice(p.NetSellPrice),netSellPricePPN:parsePrice(p.NetSellPricePPN),stockPT:a,stockPribadi:b,totalStock:a+b,promoEnabled:true,hasTierWarning};
+return{kode:m.kode,deskripsi:m.deskripsi,qty:m.qty,found:true,productName:p.ProductName||p.Description||m.deskripsi,productCode:p.ProductCode||p.Kode||m.kode,description:p.Description||m.deskripsi,unit:p.Unit||'Pcs',promoType,nettPriceOutput:(p.NettPriceOutput||'NettSellPricePPN').trim(),netSellPrice:parsePrice(p.NetSellPrice),netSellPricePPN:parsePrice(p.NetSellPricePPN),netSellPricePribadi:parsePrice(p.NetSellPricePribadi),stockPT:a,stockPribadi:b,totalStock:a+b,promoEnabled:true,hasTierWarning};
 });
 alertEl.innerHTML=`<div class="alert alert-success">✅ ${orderItems.length} item diproses. Lanjut pilih customer.</div>`;
 setTimeout(()=>{goToStep(2);renderCustomerList()},800);
@@ -389,6 +402,8 @@ document.getElementById('customer-search').addEventListener('input',function(){c
 function calculatePrice(item,customer){
 if(!item.found)return{unitPrice:0};
 const area=(customer.Area||'').trim().toUpperCase();
+const isPribadi = state.stockSource === 'PRIBADI';
+
 if(item.promoType==='TIER'||item.promoType==='PASIR'){
 const tiers=state.gsheetData.promoTier.filter(t=>normKey(t.Deskripsi)===normKey(item.description));
 if(tiers.length){
@@ -398,12 +413,17 @@ if(sel){
 let p;
 if(area.includes('JABODETABEK'))p=item.nettPriceOutput==='NettSellPrice'?parsePrice(sel.NettSellPriceJabodetabek):parsePrice(sel.NettSellPricePPNJabodetabek);
 else p=item.nettPriceOutput==='NettSellPrice'?parsePrice(sel.NettSellPriceJawaBali):parsePrice(sel.NettSellPricePPNJawaBali);
-if(!isNaN(p)&&p>0)return{unitPrice:Math.round(p)};
+if(!isNaN(p)&&p>0){
+    if(isPribadi && item.netSellPricePribadi > 0) return{unitPrice:Math.round(item.netSellPricePribadi)};
+    return{unitPrice:Math.round(p)};
 }
 }
 }
+}
+if(isPribadi && item.netSellPricePribadi > 0) return{unitPrice:Math.round(item.netSellPricePribadi)};
 return{unitPrice:Math.round(item.nettPriceOutput==='NettSellPrice'?item.netSellPrice:item.netSellPricePPN)};
 }
+
 function getProductDiscount(item){
 if(!item.promoEnabled)return 0;
 const rules=state.gsheetData.discountRules.filter(r=>normKey(r.Deskripsi)===normKey(item.description));
@@ -557,7 +577,13 @@ if(effectiveStock===0)return;
 const priceInfo=calculatePrice(item,customer);
 const productDiscount=getProductDiscount(item);
 const s=item.promoEnabled?calculatePromoSplit(item.qty,item.promoType):{paidQty:item.qty,freeQty:0};
-rows.push({customer:customer.CustomerName,email:FIXED_EMAIL,billingAddress:customer.BillingAddress||'',shippingAddress:customer.ShippingAddress||'',orderDate:orderDateSerial,dueDate:dueDateSerial,shippingDate:shippingDateSerial,orderNumber,message:FIXED_MESSAGE,productName:item.productName,description:item.description,quantity:s.paidQty,unit:item.unit,unitPrice:priceInfo.unitPrice,productDiscountRate:productDiscount? (productDiscount*100):'',orderDiscount:customerDiscount? (customerDiscount*100)+'%':'',taxName:isFirstRow?'VAT -':''});
+
+let taxNameVal = '';
+if (state.stockSource !== 'PRIBADI') {
+    taxNameVal = isFirstRow ? 'VAT -' : '';
+}
+
+rows.push({customer:customer.CustomerName,email:FIXED_EMAIL,billingAddress:customer.BillingAddress||'',shippingAddress:customer.ShippingAddress||'',orderDate:orderDateSerial,dueDate:dueDateSerial,shippingDate:shippingDateSerial,orderNumber,message:FIXED_MESSAGE,productName:item.productName,description:item.description,quantity:s.paidQty,unit:item.unit,unitPrice:priceInfo.unitPrice,productDiscountRate:productDiscount? (productDiscount*100):'',orderDiscount:customerDiscount? (customerDiscount*100)+'%':'',taxName:taxNameVal});
 isFirstRow=false;
 if(s.freeQty>0){
 rows.push({customer:customer.CustomerName,email:FIXED_EMAIL,billingAddress:customer.BillingAddress||'',shippingAddress:customer.ShippingAddress||'',orderDate:orderDateSerial,dueDate:dueDateSerial,shippingDate:shippingDateSerial,orderNumber,message:FIXED_MESSAGE,productName:item.productName,description:item.description,quantity:s.freeQty,unit:item.unit,unitPrice:0,productDiscountRate:productDiscount? (productDiscount*100):'',orderDiscount:customerDiscount? (customerDiscount*100)+'%':'',taxName:''});
