@@ -215,18 +215,26 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 document.addEventListener('DOMContentLoaded',()=>{
 const GSHEET_ID='1qcYg15I3Peg_oNhdCXNciEnG82ltj22jtoA4jz6d4pE';
 const GSHEET_BASE=`https://docs.google.com/spreadsheets/d/${GSHEET_ID}/gviz/tq?tqx=out:csv&sheet=`;
-const FIXED_EMAIL="agrindoconsultant1@gmail.com, ghena.fakturpajak@gmail.com, acc.omi001@gmail.com";
 const FIXED_MESSAGE="- Barang yang sudah dibeli tidak dapat dikembalikan atau ditukar.\n\n- Harap mencantumkan Nomor Faktur di kolom berita untuk konfirmasi pembayaran.\n\n- Payment Rekening BCA : \n5810550718 A/N PT.OLEGO MANDIRI INDONESIA.";
 
 const state={currentStep:1,stockSource:'ALL',fileData:{order:null,stockPT:null,stockPribadi:null},gsheetData:{productList:[],customerList:[],promoTier:[],discountRules:[]},selectedCustomer:null,processedItems:[],outputRows:[],filters:{},sorts:[]};
 
 const normalizeStr=s=>s==null?'':String(s).trim().toLowerCase();
 const normKey=s=>s==null?'':String(s).toLowerCase().replace(/\s+/g,' ').trim();
-const dateToExcelSerial=d=>Math.floor((d-new Date(1899,11,30))/(24*60*60*1000));
-const todaySerial=()=>dateToExcelSerial(new Date());
 const formatCurrency=n=>{if(isNaN(n)||n===null)return'Rp 0';return'Rp '+Math.round(n).toLocaleString('id-ID')};
 function parsePrice(v){if(v==null||v==='')return 0;const n=parseFloat(String(v).trim().replace(/,/g,''));return isNaN(n)?0:n}
 function parseDiscount(v){if(!v&&v!==0)return 0;let s=String(v).trim().replace(/%/g,'').replace(/,/g,'.');const n=parseFloat(s);if(isNaN(n))return 0;return n>1?n/100:n}
+
+// Fungsi Format Tanggal DD/MM/YYYY
+function formatDateDDMMYYYY(dateInput) {
+    if (!dateInput) return '';
+    let d = (dateInput instanceof Date) ? dateInput : new Date(dateInput);
+    if (isNaN(d.getTime())) return '';
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+}
 
 function calculatePromoSplit(qty,promoType){
 if(promoType==='PASIR'||promoType==='NONE'||promoType==='SBO')return{paidQty:qty,freeQty:0,type:'NONE'};
@@ -345,7 +353,6 @@ orderItems.forEach(r=>{
     const rDesc = normKey(r.deskripsi);
     const rKode = normKey(r.kode);
     
-    // Crosscheck Logic: Always check Description AND Kode
     const product = state.gsheetData.productList.find(p => {
         const pDesc = normKey(p.Description);
         const pName = normKey(p.ProductName);
@@ -354,11 +361,9 @@ orderItems.forEach(r=>{
         let descMatch = rDesc && (pDesc === rDesc || pName === rDesc);
         let codeMatch = rKode && pKode === rKode;
         
-        // If both are provided in order form, prioritize exact match on both
         if (rDesc && rKode) {
             if (descMatch && codeMatch) return true;
         }
-        // Fallback: match on either if available
         if (descMatch || codeMatch) return true;
         
         return false;
@@ -559,12 +564,20 @@ const orderNumber=on.value.trim();
 if(!orderNumber){on.classList.add('input-error');oe.style.display='block';on.focus();return}
 on.classList.remove('input-error');oe.style.display='none';
 const customer=state.gsheetData.customerList[state.selectedCustomer];
-const orderDateSerial=todaySerial();
-const dueDateSerial=orderDateSerial+(parseInt(customer.DueDateDays)||30);
+
+// Format Tanggal DD/MM/YYYY
+const today = new Date();
+const orderDateStr = formatDateDDMMYYYY(today);
+
+const dueDate = new Date(today);
+dueDate.setDate(dueDate.getDate() + (parseInt(customer.DueDateDays) || 30));
+const dueDateStr = formatDateDDMMYYYY(dueDate);
+
 const sd=document.getElementById('shipping-date').value;
-const shippingDateSerial=sd?dateToExcelSerial(new Date(sd)):'';
+const shippingDateStr = sd ? formatDateDDMMYYYY(new Date(sd)) : '';
+
 const customerDiscount=parseDiscount(customer.DiscountRate);
-let isFirstRow=true;const rows=[];
+const rows=[];
 state.processedItems.forEach(item=>{
 if(!item.found||item.qty<=0)return;
 
@@ -578,15 +591,52 @@ const priceInfo=calculatePrice(item,customer);
 const productDiscount=getProductDiscount(item);
 const s=item.promoEnabled?calculatePromoSplit(item.qty,item.promoType):{paidQty:item.qty,freeQty:0};
 
+// VAT - mengisi ke bawah (semua baris) sesuai jumlah row yang ada datanya untuk PT
 let taxNameVal = '';
 if (state.stockSource !== 'PRIBADI') {
-    taxNameVal = isFirstRow ? 'VAT -' : '';
+    taxNameVal = 'VAT -';
 }
 
-rows.push({customer:customer.CustomerName,email:FIXED_EMAIL,billingAddress:customer.BillingAddress||'',shippingAddress:customer.ShippingAddress||'',orderDate:orderDateSerial,dueDate:dueDateSerial,shippingDate:shippingDateSerial,orderNumber,message:FIXED_MESSAGE,productName:item.productName,description:item.description,quantity:s.paidQty,unit:item.unit,unitPrice:priceInfo.unitPrice,productDiscountRate:productDiscount? (productDiscount*100):'',orderDiscount:customerDiscount? (customerDiscount*100)+'%':'',taxName:taxNameVal});
-isFirstRow=false;
+rows.push({
+    customer:customer.CustomerName,
+    email: customer.Email || '', // Ambil dari CustomerList
+    billingAddress:customer.BillingAddress||'',
+    shippingAddress:customer.ShippingAddress||'',
+    orderDate:orderDateStr,
+    dueDate:dueDateStr,
+    shippingDate:shippingDateStr,
+    orderNumber,
+    message:FIXED_MESSAGE,
+    productName:item.productName,
+    description:item.description,
+    quantity:s.paidQty,
+    unit:item.unit,
+    unitPrice:priceInfo.unitPrice,
+    productDiscountRate:productDiscount? (productDiscount*100):'',
+    orderDiscount:customerDiscount? (customerDiscount*100)+'%':'',
+    taxName:taxNameVal
+});
+
 if(s.freeQty>0){
-rows.push({customer:customer.CustomerName,email:FIXED_EMAIL,billingAddress:customer.BillingAddress||'',shippingAddress:customer.ShippingAddress||'',orderDate:orderDateSerial,dueDate:dueDateSerial,shippingDate:shippingDateSerial,orderNumber,message:FIXED_MESSAGE,productName:item.productName,description:item.description,quantity:s.freeQty,unit:item.unit,unitPrice:0,productDiscountRate:productDiscount? (productDiscount*100):'',orderDiscount:customerDiscount? (customerDiscount*100)+'%':'',taxName:''});
+rows.push({
+    customer:customer.CustomerName,
+    email: customer.Email || '',
+    billingAddress:customer.BillingAddress||'',
+    shippingAddress:customer.ShippingAddress||'',
+    orderDate:orderDateStr,
+    dueDate:dueDateStr,
+    shippingDate:shippingDateStr,
+    orderNumber,
+    message:FIXED_MESSAGE,
+    productName:item.productName,
+    description:item.description,
+    quantity:s.freeQty,
+    unit:item.unit,
+    unitPrice:0,
+    productDiscountRate:productDiscount? (productDiscount*100):'',
+    orderDiscount:customerDiscount? (customerDiscount*100)+'%':'',
+    taxName:taxNameVal
+});
 }
 });
 state.outputRows=rows;renderPreview(rows,customer);goToStep(4);
