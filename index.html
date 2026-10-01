@@ -104,6 +104,7 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 .col-filter{width:100%;min-width:70px;padding:5px 8px;font-size:12px;background:var(--surface);border:1px solid var(--line);border-radius:6px;color:var(--ink);outline:none}
 .col-filter:focus{border-color:var(--teal)}
 .hint{font-size:11px;color:var(--ink-3);margin-bottom:8px}
+.master-badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700;background:var(--teal-soft);color:var(--teal)}
 </style>
 </head>
 <body>
@@ -124,7 +125,7 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 <div class="section active" id="section-1">
 <div class="card">
 <div class="card-title">Upload Data</div>
-<div class="card-desc">Upload 3 file Excel. Master data otomatis dibaca dari Google Sheets.</div>
+<div class="card-desc">Upload 3 file Excel. Master data otomatis dibaca dari Google Sheets sesuai Tujuan Input Order.</div>
 
 <div class="input-group" style="max-width: 300px; margin-bottom: 20px;">
     <label class="input-label">Tujuan Input Order</label>
@@ -160,7 +161,11 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 <div class="section" id="section-3">
 <div class="card">
 <div class="flex-between mb-4">
-<div><div class="card-title">📝 Review & Adjust Order</div><div class="card-desc" id="review-customer-info"></div></div>
+<div>
+  <div class="card-title">📝 Review & Adjust Order</div>
+  <div class="card-desc" id="review-customer-info"></div>
+  <div class="card-desc">Master Data: <span class="master-badge" id="master-source-3">-</span></div>
+</div>
 <div class="flex gap-2" style="align-items:center; flex-wrap:wrap;">
 <label class="input-label" style="margin:0; white-space:nowrap;">Sumber Stock:</label>
 <select id="stock-source-select" class="input-field" style="width:auto; min-width:180px; padding:8px 12px; margin:0;">
@@ -196,7 +201,11 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 <div class="section" id="section-4">
 <div class="card">
 <div class="flex-between mb-4">
-<div><div class="card-title">✅ Preview Output Jurnal</div><div class="card-desc">Item Not Available (stock 0) otomatis tidak dimasukkan.</div></div>
+<div>
+  <div class="card-title">✅ Preview Output Jurnal</div>
+  <div class="card-desc">Item Not Available (stock 0) otomatis tidak dimasukkan.</div>
+  <div class="card-desc">Master Data: <span class="master-badge" id="master-source-4">-</span></div>
+</div>
 <div class="flex gap-2">
 <button class="btn btn-secondary btn-sm" id="btn-back-3">← Edit</button>
 <button class="btn btn-primary btn-sm" id="btn-download-top">⬇ Download Excel</button>
@@ -236,7 +245,8 @@ const state={
     processedItems:[],
     outputRows:[],
     filters:{},
-    sorts:[]
+    sorts:[],
+    cache:{orderItems:null,sPT:null,sPr:null}
 };
 
 const normalizeStr=s=>s==null?'':String(s).trim().toLowerCase();
@@ -260,6 +270,20 @@ if(promoType==='PASIR'||promoType==='NONE'||promoType==='SBO')return{paidQty:qty
 if(qty>=11&&qty%11===0)return{paidQty:qty,freeQty:qty/11,type:'PROMO11'};
 if(qty>=12){const f=Math.floor(qty/12);if(f>0)return{paidQty:qty-f,freeQty:f,type:'PROMO12'}}
 return{paidQty:qty,freeQty:0,type:'NONE'};
+}
+
+// Sumber master data sesuai Tujuan Input Order
+function activeListInfo(){
+  return state.orderSource==='PT'
+    ? {list:state.gsheetData.ptProductList, name:'PTProductList'}
+    : {list:state.gsheetData.pribadiProductList, name:'PribadiProductList'};
+}
+function updateMasterLabel(){
+  const {name}=activeListInfo();
+  const e3=document.getElementById('master-source-3');
+  const e4=document.getElementById('master-source-4');
+  if(e3)e3.textContent=name;
+  if(e4)e4.textContent=name;
 }
 
 function goToStep(step){
@@ -355,6 +379,57 @@ if(desk&&qty>0)items.push({kode,deskripsi:desk,qty});
 return items;
 }
 
+// Bangun processedItems dari master data yang AKTIF (PT / Pribadi)
+function rebuildItems(){
+  const {list}=activeListInfo();
+  const orderItems=state.cache.orderItems||[];
+  const sPT=state.cache.sPT||{byName:{},byCode:{}};
+  const sPr=state.cache.sPr||{byName:{},byCode:{}};
+
+  const merged=new Map();
+  orderItems.forEach(r=>{
+    const rDesc=normKey(r.deskripsi);
+    const rKode=normKey(r.kode);
+    let product=null;
+    // 1) Lookup utama via KODE dari Form Order
+    if(rKode){ product=list.find(p=>normKey(p.Kode||p.ProductCode)===rKode); }
+    // 2) Fallback via Description / ProductName
+    if(!product&&rDesc){ product=list.find(p=>{const d=normKey(p.Description);const n=normKey(p.ProductName);return d===rDesc||n===rDesc;}); }
+    const key=product?('P|'+normKey(product.Description||product.ProductName)):('N|'+rDesc);
+    if(merged.has(key)){merged.get(key).qty+=r.qty}else{merged.set(key,{kode:r.kode,deskripsi:r.deskripsi,qty:r.qty,product:product||null});}
+  });
+
+  state.processedItems=[...merged.values()].map(m=>{
+    const p=m.product;
+    let a=p?findStock(sPT,p):0;
+    let b=p?findStock(sPr,p):0;
+    if(a===0&&b===0){
+      const mock={Description:m.deskripsi,ProductName:m.deskripsi,Kode:m.kode,ProductCode:m.kode};
+      const fa=findStock(sPT,mock), fb=findStock(sPr,mock);
+      if(fa>0)a=fa; if(fb>0)b=fb;
+    }
+    if(!p)return{kode:m.kode,deskripsi:m.deskripsi,qty:m.qty,found:false,productName:m.deskripsi,productCode:m.kode,description:m.deskripsi,unit:'Pcs',promoType:'NONE',nettPriceOutput:'NettSellPricePPN',netSellPrice:0,netSellPricePPN:0,priceList:0,stockPT:a,stockPribadi:b,totalStock:a+b,promoEnabled:true,hasTierWarning:false};
+    const promoType=(p.PromoType||'').trim().toUpperCase();
+    let hasTierWarning=false;
+    if(promoType==='TIER'||promoType==='PASIR'){ if(!state.gsheetData.promoTier.some(t=>normKey(t.Deskripsi)===normKey(p.Description)))hasTierWarning=true; }
+    return{
+      kode:m.kode,deskripsi:m.deskripsi,qty:m.qty,found:true,
+      productName:p.ProductName||p.Description||m.deskripsi,
+      productCode:p.ProductCode||p.Kode||m.kode,
+      description:p.Description||m.deskripsi,
+      unit:p.Unit||'Pcs',
+      promoType,
+      nettPriceOutput:(p.NettPriceOutput||'NetSellPricePPN').trim(),
+      netSellPrice:parsePrice(p.NetSellPrice),
+      netSellPricePPN:parsePrice(p.NetSellPricePPN),
+      priceList:parsePrice(p.PriceList),
+      stockPT:a,stockPribadi:b,totalStock:a+b,
+      promoEnabled:true,hasTierWarning
+    };
+  });
+  updateMasterLabel();
+}
+
 async function processData(){
 const alertEl=document.getElementById('upload-alert');
 alertEl.innerHTML='<div class="loading"><div class="spinner"></div> Memproses data...</div>';
@@ -368,79 +443,18 @@ state.gsheetData={
     discountRules:sheets.ProductDiscountRules||[]
 };
 
-const activeProductList = state.orderSource === 'PT' ? state.gsheetData.ptProductList : state.gsheetData.pribadiProductList;
-const listName = state.orderSource === 'PT' ? 'PTProductList' : 'PribadiProductList';
-
-if(!activeProductList.length){alertEl.innerHTML=`<div class="alert alert-warning">⚠ Gagal mengambil ${listName} (CORS/Offline). Fallback ke pembacaan Excel langsung.</div>`;}
+const {list,name}=activeListInfo();
+if(!list.length){alertEl.innerHTML=`<div class="alert alert-warning">⚠ Gagal mengambil ${name} (CORS/Offline). Fallback ke pembacaan Excel langsung.</div>`;}
 
 const sPT=parseStockFile(state.fileData.stockPT);
 const sPr=parseStockFile(state.fileData.stockPribadi);
 const orderItems=parseFormOrder(state.fileData.order);
 if(!orderItems.length){alertEl.innerHTML='<div class="alert alert-error">❌ Tidak ada item valid di Form Order.</div>';return}
-const merged=new Map();
-orderItems.forEach(r=>{
-    const rDesc = normKey(r.deskripsi);
-    const rKode = normKey(r.kode);
-    
-    let product = null;
-    
-    // 1. Prioritize lookup by Kode from Form Order
-    if (rKode) {
-        product = activeProductList.find(p => {
-            const pKode = normKey(p.Kode || p.ProductCode || p.SKU || '');
-            return pKode && pKode === rKode;
-        });
-    }
-    
-    // 2. Fallback to Description/ProductName if Kode not found or empty
-    if (!product && rDesc) {
-        product = activeProductList.find(p => {
-            const pDesc = normKey(p.Description);
-            const pName = normKey(p.ProductName);
-            return pDesc === rDesc || pName === rDesc;
-        });
-    }
 
-    const key=product?('P|'+normKey(product.Description||product.ProductName)):('N|'+rDesc);
-    if(merged.has(key)){merged.get(key).qty+=r.qty}else{merged.set(key,{kode:r.kode,deskripsi:r.deskripsi,qty:r.qty,product:product||null})}
-});
-state.processedItems=[...merged.values()].map(m=>{
-const p=m.product;
-let a = p ? findStock(sPT, p) : 0;
-let b = p ? findStock(sPr, p) : 0;
+state.cache={orderItems,sPT,sPr};
+rebuildItems();
 
-if (a === 0 && b === 0) {
-    const mockProduct = { Description: m.deskripsi, ProductName: m.deskripsi, Kode: m.kode, ProductCode: m.kode };
-    const fallbackA = findStock(sPT, mockProduct);
-    const fallbackB = findStock(sPr, mockProduct);
-    if (fallbackA > 0) a = fallbackA;
-    if (fallbackB > 0) b = fallbackB;
-}
-
-if(!p)return{kode:m.kode,deskripsi:m.deskripsi,qty:m.qty,found:false,productName:m.deskripsi,productCode:m.kode,description:m.deskripsi,unit:'Pcs',promoType:'NONE',nettPriceOutput:'NetSellPricePPN',netSellPrice:0,netSellPricePPN:0,priceList:0,stockPT:a,stockPribadi:b,totalStock:a+b,promoEnabled:true,hasTierWarning:false};
-const promoType=(p.PromoType||'').trim().toUpperCase();
-let hasTierWarning=false;
-if(promoType==='TIER'||promoType==='PASIR'){if(!state.gsheetData.promoTier.some(t=>normKey(t.Deskripsi)===normKey(p.Description)))hasTierWarning=true}
-
-const finalProductName = p.ProductName || p.Description || m.deskripsi;
-const finalDescription = p.Description || p.ProductName || m.deskripsi;
-const finalProductCode = p.Kode || p.ProductCode || p.SKU || m.kode;
-
-return{
-    kode:m.kode,deskripsi:m.deskripsi,qty:m.qty,found:true,
-    productName: finalProductName,
-    productCode: finalProductCode,
-    description: finalDescription,
-    unit:p.Unit||'Pcs',
-    promoType,
-    nettPriceOutput:(p.NettPriceOutput||'NetSellPricePPN').trim(),
-    netSellPrice:parsePrice(p.NetSellPrice),
-    netSellPricePPN:parsePrice(p.NetSellPricePPN),
-    priceList:parsePrice(p.PriceList),
-    stockPT:a,stockPribadi:b,totalStock:a+b,promoEnabled:true,hasTierWarning
-};
-});
-alertEl.innerHTML=`<div class="alert alert-success">✅ ${orderItems.length} item diproses. Lanjut pilih customer.</div>`;
+alertEl.innerHTML=`<div class="alert alert-success">✅ ${orderItems.length} item diproses (Master: ${name}). Lanjut pilih customer.</div>`;
 setTimeout(()=>{goToStep(2);renderCustomerList()},800);
 }catch(err){alertEl.innerHTML=`<div class="alert alert-error">❌ Error: ${err.message}</div>`}
 }
@@ -479,7 +493,6 @@ if (item.nettPriceOutput === 'NettSellPrice' || item.nettPriceOutput === 'NetSel
 } else if (item.nettPriceOutput === 'PriceList') {
     basePrice = item.priceList;
 }
-
 return {unitPrice: Math.round(basePrice)};
 }
 
@@ -621,11 +634,9 @@ const customer=state.gsheetData.customerList[state.selectedCustomer];
 
 const today = new Date();
 const orderDateStr = formatDateDDMMYYYY(today);
-
 const dueDate = new Date(today);
 dueDate.setDate(dueDate.getDate() + (parseInt(customer.DueDateDays) || 30));
 const dueDateStr = formatDateDDMMYYYY(dueDate);
-
 const sd=document.getElementById('shipping-date').value;
 const shippingDateStr = sd ? formatDateDDMMYYYY(new Date(sd)) : '';
 
@@ -633,11 +644,9 @@ const customerDiscount=parseDiscount(customer.DiscountRate);
 const rows=[];
 state.processedItems.forEach(item=>{
 if(!item.found||item.qty<=0)return;
-
 let effectiveStock = item.totalStock;
 if (state.stockSource === 'PT') effectiveStock = item.stockPT;
 else if (state.stockSource === 'PRIBADI') effectiveStock = item.stockPribadi;
-
 if(effectiveStock===0)return;
 
 const priceInfo=calculatePrice(item,customer);
@@ -645,46 +654,34 @@ const productDiscount=getProductDiscount(item);
 const s=item.promoEnabled?calculatePromoSplit(item.qty,item.promoType):{paidQty:item.qty,freeQty:0};
 
 let taxNameVal = '';
-if (state.orderSource === 'PT') {
-    taxNameVal = 'VAT-';
-}
+if (state.orderSource === 'PT') { taxNameVal = 'VAT-'; }
 
 rows.push({
     customer:customer.CustomerName,
-    email: customer.Email || '', 
+    email: customer.Email || '',
     billingAddress:customer.BillingAddress||'',
     shippingAddress:customer.ShippingAddress||'',
-    orderDate:orderDateStr,
-    dueDate:dueDateStr,
-    shippingDate:shippingDateStr,
-    orderNumber,
-    message:FIXED_MESSAGE,
-    productName:item.productName,
-    description:item.description,
-    quantity:s.paidQty,
-    unit:item.unit,
-    unitPrice:priceInfo.unitPrice,
+    orderDate:orderDateStr, dueDate:dueDateStr, shippingDate:shippingDateStr,
+    orderNumber, message:FIXED_MESSAGE,
+    productName:item.productName,   // dari master data aktif
+    description:item.description,   // dari master data aktif
+    quantity:s.paidQty, unit:item.unit,
+    unitPrice:priceInfo.unitPrice,  // dari master data aktif
     productDiscountRate:productDiscount? (productDiscount*100):'',
     orderDiscount:customerDiscount? (customerDiscount*100)+'%':'',
     taxName:taxNameVal
 });
-
 if(s.freeQty>0){
 rows.push({
     customer:customer.CustomerName,
     email: customer.Email || '',
     billingAddress:customer.BillingAddress||'',
     shippingAddress:customer.ShippingAddress||'',
-    orderDate:orderDateStr,
-    dueDate:dueDateStr,
-    shippingDate:shippingDateStr,
-    orderNumber,
-    message:FIXED_MESSAGE,
+    orderDate:orderDateStr, dueDate:dueDateStr, shippingDate:shippingDateStr,
+    orderNumber, message:FIXED_MESSAGE,
     productName:item.productName,
     description:item.description,
-    quantity:s.freeQty,
-    unit:item.unit,
-    unitPrice:0,
+    quantity:s.freeQty, unit:item.unit, unitPrice:0,
     productDiscountRate:productDiscount? (productDiscount*100):'',
     orderDiscount:customerDiscount? (customerDiscount*100)+'%':'',
     taxName:taxNameVal
@@ -716,6 +713,7 @@ XLSX.writeFile(wb,`SalesOrder_${name}_${new Date().toISOString().split('T')[0]}.
 }
 
 buildReviewHeader();
+updateMasterLabel();
 document.getElementById('btn-process').addEventListener('click',processData);
 document.getElementById('btn-back-1').addEventListener('click',()=>goToStep(1));
 document.getElementById('btn-to-step3').addEventListener('click',()=>goToStep(3));
@@ -734,8 +732,13 @@ document.getElementById('stock-source-select').addEventListener('change', functi
     renderReviewTable();
 });
 
+// Ganti Tujuan Input Order -> rebuild semua item dari master data yang benar
 document.getElementById('order-source-select').addEventListener('change', function(){
     state.orderSource = this.value;
+    updateMasterLabel();
+    if(state.cache.orderItems){ rebuildItems(); }
+    if(state.currentStep===3){ renderReviewTable(); }
+    else if(state.currentStep===4){ generatePreview(); }
 });
 
 });
