@@ -382,21 +382,24 @@ orderItems.forEach(r=>{
     const rDesc = normKey(r.deskripsi);
     const rKode = normKey(r.kode);
     
-    const product = activeProductList.find(p => {
-        const pDesc = normKey(p.Description);
-        const pName = normKey(p.ProductName);
-        const pKode = normKey(p.Kode || p.ProductCode);
-        
-        let descMatch = rDesc && (pDesc === rDesc || pName === rDesc);
-        let codeMatch = rKode && pKode === rKode;
-        
-        if (rDesc && rKode) {
-            if (descMatch && codeMatch) return true;
-        }
-        if (descMatch || codeMatch) return true;
-        
-        return false;
-    });
+    let product = null;
+    
+    // 1. Prioritize lookup by Kode from Form Order
+    if (rKode) {
+        product = activeProductList.find(p => {
+            const pKode = normKey(p.Kode || p.ProductCode || p.SKU || '');
+            return pKode && pKode === rKode;
+        });
+    }
+    
+    // 2. Fallback to Description/ProductName if Kode not found or empty
+    if (!product && rDesc) {
+        product = activeProductList.find(p => {
+            const pDesc = normKey(p.Description);
+            const pName = normKey(p.ProductName);
+            return pDesc === rDesc || pName === rDesc;
+        });
+    }
 
     const key=product?('P|'+normKey(product.Description||product.ProductName)):('N|'+rDesc);
     if(merged.has(key)){merged.get(key).qty+=r.qty}else{merged.set(key,{kode:r.kode,deskripsi:r.deskripsi,qty:r.qty,product:product||null})}
@@ -418,11 +421,16 @@ if(!p)return{kode:m.kode,deskripsi:m.deskripsi,qty:m.qty,found:false,productName
 const promoType=(p.PromoType||'').trim().toUpperCase();
 let hasTierWarning=false;
 if(promoType==='TIER'||promoType==='PASIR'){if(!state.gsheetData.promoTier.some(t=>normKey(t.Deskripsi)===normKey(p.Description)))hasTierWarning=true}
+
+const finalProductName = p.ProductName || p.Description || m.deskripsi;
+const finalDescription = p.Description || p.ProductName || m.deskripsi;
+const finalProductCode = p.Kode || p.ProductCode || p.SKU || m.kode;
+
 return{
     kode:m.kode,deskripsi:m.deskripsi,qty:m.qty,found:true,
-    productName:p.ProductName||p.Description||m.deskripsi,
-    productCode:p.ProductCode||p.Kode||m.kode,
-    description:p.Description||m.deskripsi,
+    productName: finalProductName,
+    productCode: finalProductCode,
+    description: finalDescription,
     unit:p.Unit||'Pcs',
     promoType,
     nettPriceOutput:(p.NettPriceOutput||'NetSellPricePPN').trim(),
