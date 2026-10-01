@@ -675,7 +675,7 @@ rows.push({
     description:item.description,   // dari master data aktif (kolom Description)
     quantity:s.paidQty, unit:item.unit,
     unitPrice:priceInfo.unitPrice,  // dari master data aktif
-    productDiscountRate:productDiscount? (productDiscount*100):'',
+    productDiscountRate:productDiscount? (productDiscount*100)+'%':'', // FIXED: Tambah '%'
     orderDiscount:customerDiscount? (customerDiscount*100)+'%':'',
     taxName:taxNameVal
 });
@@ -690,7 +690,7 @@ rows.push({
     productName:item.productName,
     description:item.description,
     quantity:s.freeQty, unit:item.unit, unitPrice:0,
-    productDiscountRate:productDiscount? (productDiscount*100):'',
+    productDiscountRate:productDiscount? (productDiscount*100)+'%':'', // FIXED: Tambah '%'
     orderDiscount:customerDiscount? (customerDiscount*100)+'%':'',
     taxName:taxNameVal
 });
