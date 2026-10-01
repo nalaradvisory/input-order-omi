@@ -127,15 +127,15 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 <div class="card-desc">Upload 3 file Excel. Master data otomatis dibaca dari Google Sheets.</div>
 
 <div class="input-group" style="max-width: 300px; margin-bottom: 20px;">
-    <label class="input-label">Sumber Input Order</label>
+    <label class="input-label">Tujuan Input Order</label>
     <select id="order-source-select" class="input-field">
-        <option value="PT">PT (PTProductList)</option>
-        <option value="PRIBADI">Pribadi (PribadiProductList)</option>
+        <option value="PT">PT</option>
+        <option value="PRIBADI">Pribadi</option>
     </select>
 </div>
 
 <div class="upload-grid">
-<div class="upload-box" id="upload-order"><span class="upload-badge">Wajib</span><div class="upload-icon">📋</div><div class="upload-label">Form Order Customer</div><div class="upload-hint">Kategori | Kode | Deskripsi | Qty | Total</div><div class="upload-file" id="file-order-name"></div><input type="file" id="file-order" accept=".xlsx,.xls" data-type="order" class="file-input"></div>
+<div class="upload-box" id="upload-order"><span class="upload-badge">Wajib</span><div class="upload-icon">📋</div><div class="upload-label">Form Order Customer</div><div class="upload-hint">File Form Order dari Customer</div><div class="upload-file" id="file-order-name"></div><input type="file" id="file-order" accept=".xlsx,.xls" data-type="order" class="file-input"></div>
 <div class="upload-box" id="upload-stock-pt"><span class="upload-badge">Wajib</span><div class="upload-icon">🏢</div><div class="upload-label">Stock PT</div><div class="upload-hint">Laporan Pergerakan Barang Gudang PT</div><div class="upload-file" id="file-stock-pt-name"></div><input type="file" id="file-stock-pt" accept=".xlsx,.xls" data-type="stockPT" class="file-input"></div>
 <div class="upload-box" id="upload-stock-pribadi"><span class="upload-badge">Wajib</span><div class="upload-icon">🏠</div><div class="upload-label">Stock Pribadi</div><div class="upload-hint">Laporan Pergerakan Barang Gudang Pribadi</div><div class="upload-file" id="file-stock-pribadi-name"></div><input type="file" id="file-stock-pribadi" accept=".xlsx,.xls" data-type="stockPribadi" class="file-input"></div>
 </div>
