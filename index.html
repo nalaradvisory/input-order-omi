@@ -662,7 +662,7 @@ const productDiscount=getProductDiscount(item);
 const s=item.promoEnabled?calculatePromoSplit(item.qty,item.promoType):{paidQty:item.qty,freeQty:0};
 
 let taxNameVal = '';
-if (state.orderSource === 'PT') { taxNameVal = 'VAT-'; }
+if (state.orderSource === 'PT') { taxNameVal = 'VAT -'; }
 
 rows.push({
     customer:customer.CustomerName,
