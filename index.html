@@ -265,11 +265,47 @@ function formatDateDDMMYYYY(dateInput) {
     return `${day}/${month}/${year}`;
 }
 
+// ==========================================
+// [UPDATE] Logika Promo PADDO (132 atau 144 -> 132 bayar, 12 gratis)
+// ==========================================
 function calculatePromoSplit(qty,promoType){
-if(promoType==='PASIR'||promoType==='NONE'||promoType==='SBO')return{paidQty:qty,freeQty:0,type:'NONE'};
-if(qty>=11&&qty%11===0)return{paidQty:qty,freeQty:qty/11,type:'PROMO11'};
-if(qty>=12){const f=Math.floor(qty/12);if(f>0)return{paidQty:qty-f,freeQty:f,type:'PROMO12'}}
-return{paidQty:qty,freeQty:0,type:'NONE'};
+    if(promoType==='PASIR'||promoType==='NONE'||promoType==='SBO') return {paidQty:qty,freeQty:0,type:'NONE'};
+    
+    if(promoType==='PADDO'){
+        let blocks;
+        // Jika kelipatan 144 (misal 144, 288), blocks dihitung dari 144
+        if (qty % 144 === 0) {
+            blocks = qty / 144;
+        } else {
+            // Jika bukan kelipatan 144 (misal 132, 150, 264), blocks dihitung dari 132
+            blocks = Math.floor(qty / 132);
+        }
+        
+        if(blocks > 0){
+            let remainder = qty % 144;
+            let paidQty;
+            // Jika pas kelipatan 144 ATAU sisa baginya >= 132 (misal input 132, 276)
+            if (remainder === 0 || remainder >= 132) {
+                paidQty = blocks * 132;
+            } else {
+                // Jika input angka nanggung (misal 150), paidQty tetap mengikuti qty asli
+                paidQty = qty;
+            }
+            return {
+                paidQty: paidQty,
+                freeQty: blocks * 12,
+                type: 'PROMO_PADDO'
+            };
+        }
+        return {paidQty:qty, freeQty:0, type:'NONE'};
+    }
+
+    if(qty>=11&&qty%11===0) return {paidQty:qty,freeQty:qty/11,type:'PROMO11'};
+    if(qty>=12){
+        const f=Math.floor(qty/12);
+        if(f>0) return {paidQty:qty-f,freeQty:f,type:'PROMO12'};
+    }
+    return {paidQty:qty,freeQty:0,type:'NONE'};
 }
 
 // Sumber master data sesuai Tujuan Input Order
@@ -512,6 +548,10 @@ rules.sort((a,b)=>(parseInt(b.MinQty)||0)-(parseInt(a.MinQty)||0));
 const m=rules.find(r=>item.qty>=(parseInt(r.MinQty)||0));
 return m?parseDiscount(m.ProductDiscRate):0;
 }
+
+// ==========================================
+// [UPDATE] Label Promo Info disesuaikan untuk PADDO
+// ==========================================
 function getPromoInfo(item){
 if(!item.found||!item.promoEnabled)return'No Promo';
 const promoType=item.promoType;
@@ -520,7 +560,17 @@ if(promoType==='PASIR'){if(item.qty>0)parts.push('Promo Tier Pasir');}
 else if(promoType==='TIER'){if(item.qty>0)parts.push('Promo Tier Tissue');}
 const disc=getProductDiscount(item);
 if(disc>0)parts.push('Promo '+ (disc*100) +'%');
-if(promoType!=='PASIR'&&promoType!=='NONE'&&promoType!=='SBO'){
+
+// --- LOGIKA LABEL KHUSUS PADDO ---
+if(promoType==='PADDO'){
+    const s=calculatePromoSplit(item.qty,promoType);
+    if(s.freeQty>0){
+        const freeLusin = s.freeQty / 12;
+        parts.push(`Beli 11 Lusin Gratis ${freeLusin} Lusin (Bayar ${s.paidQty} pcs, Free ${s.freeQty} pcs)`);
+    }
+} 
+// -----------------------------------------
+else if(promoType!=='PASIR'&&promoType!=='NONE'&&promoType!=='SBO'){
 const s=calculatePromoSplit(item.qty,promoType);
 if(s.freeQty>0)parts.push('Buy11Get1 (Bayar '+s.paidQty+', Free '+s.freeQty+')');
 }
