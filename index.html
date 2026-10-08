@@ -265,30 +265,23 @@ function formatDateDDMMYYYY(dateInput) {
     return `${day}/${month}/${year}`;
 }
 
-// ==========================================
-// [UPDATE] Logika Promo PADDO (132 atau 144 -> 132 bayar, 12 gratis)
-// ==========================================
 function calculatePromoSplit(qty,promoType){
     if(promoType==='PASIR'||promoType==='NONE'||promoType==='SBO') return {paidQty:qty,freeQty:0,type:'NONE'};
     
     if(promoType==='PADDO'){
         let blocks;
-        // Jika kelipatan 144 (misal 144, 288), blocks dihitung dari 144
         if (qty % 144 === 0) {
             blocks = qty / 144;
         } else {
-            // Jika bukan kelipatan 144 (misal 132, 150, 264), blocks dihitung dari 132
             blocks = Math.floor(qty / 132);
         }
         
         if(blocks > 0){
             let remainder = qty % 144;
             let paidQty;
-            // Jika pas kelipatan 144 ATAU sisa baginya >= 132 (misal input 132, 276)
             if (remainder === 0 || remainder >= 132) {
                 paidQty = blocks * 132;
             } else {
-                // Jika input angka nanggung (misal 150), paidQty tetap mengikuti qty asli
                 paidQty = qty;
             }
             return {
@@ -308,7 +301,6 @@ function calculatePromoSplit(qty,promoType){
     return {paidQty:qty,freeQty:0,type:'NONE'};
 }
 
-// Sumber master data sesuai Tujuan Input Order
 function activeListInfo(){
   return state.orderSource==='PT'
     ? {list:state.gsheetData.ptProductList, name:'PTProductList'}
@@ -351,8 +343,6 @@ function checkUploadComplete(){document.getElementById('btn-process').disabled=!
 
 function parseCSVText(text){if(!text||text.trim()==='')return[];const rows=[];let cur=[],field='',inQ=false;for(let i=0;i<text.length;i++){const ch=text[i],nx=i+1<text.length?text[i+1]:'';if(inQ){if(ch==='"'&&nx==='"'){field+='"';i++}else if(ch==='"')inQ=false;else field+=ch}else{if(ch==='"')inQ=true;else if(ch===','){cur.push(field.trim());field=''}else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&nx==='\n')i++;cur.push(field.trim());field='';if(cur.some(f=>f!==''))rows.push(cur);cur=[]}else field+=ch}}cur.push(field.trim());if(cur.some(f=>f!==''))rows.push(cur);return rows}
 
-// [FIXED] Sanitize header: buang BOM dan bintang (*) di depan nama kolom
-// mis. "*ProductName" -> "ProductName", sehingga p.ProductName kebaca (tidak fallback ke Description)
 function csvToObjects(rows){
 if(!rows||rows.length<2)return[];
 const h=rows[0].map(x=>String(x==null?'':x).replace(/^\uFEFF/,'').replace(/^\*+/,'').trim());
@@ -423,7 +413,6 @@ if(desk&&qty>0)items.push({kode,deskripsi:desk,qty});
 return items;
 }
 
-// Bangun processedItems dari master data yang AKTIF (PT / Pribadi)
 function rebuildItems(){
   const {list}=activeListInfo();
   const orderItems=state.cache.orderItems||[];
@@ -435,9 +424,7 @@ function rebuildItems(){
     const rDesc=normKey(r.deskripsi);
     const rKode=normKey(r.kode);
     let product=null;
-    // 1) Lookup utama via KODE dari Form Order
     if(rKode){ product=list.find(p=>normKey(p.Kode||p.ProductCode)===rKode); }
-    // 2) Fallback via Description / ProductName
     if(!product&&rDesc){ product=list.find(p=>{const d=normKey(p.Description);const n=normKey(p.ProductName);return d===rDesc||n===rDesc;}); }
     const key=product?('P|'+normKey(product.Description||product.ProductName)):('N|'+rDesc);
     if(merged.has(key)){merged.get(key).qty+=r.qty}else{merged.set(key,{kode:r.kode,deskripsi:r.deskripsi,qty:r.qty,product:product||null});}
@@ -511,6 +498,9 @@ c.querySelectorAll('.customer-item').forEach(el=>el.addEventListener('click',()=
 }
 document.getElementById('customer-search').addEventListener('input',function(){const q=normalizeStr(this.value);document.querySelectorAll('.customer-item').forEach(el=>{const idx=parseInt(el.dataset.idx);const x=state.gsheetData.customerList[idx];if(!x)return;el.style.display=normalizeStr(x.CustomerName).includes(q)?'block':'none'})});
 
+// ==========================================
+// [UPDATE] Logika Kenaikan Harga 10% untuk SBO pada Customer Tertentu
+// ==========================================
 function calculatePrice(item,customer){
 if(!item.found)return{unitPrice:0};
 const area=(customer.Area||'').trim().toUpperCase();
@@ -537,7 +527,18 @@ if (item.nettPriceOutput === 'NettSellPrice' || item.nettPriceOutput === 'NetSel
 } else if (item.nettPriceOutput === 'PriceList') {
     basePrice = item.priceList;
 }
-return {unitPrice: Math.round(basePrice)};
+
+// --- TAMBAHAN LOGIKA BARU: KENAIKAN HARGA 10% UNTUK SBO PADA CUSTOMER TERTENTU ---
+const customerName = (customer.CustomerName || '').trim().toUpperCase();
+const isSpecialCustomer = customerName.includes('JEJE JAYA ABADI') || customerName.includes('PUTRA JEJE RADAL');
+
+let finalPrice = basePrice;
+if (item.promoType === 'SBO' && isSpecialCustomer) {
+    finalPrice = basePrice * 1.10; // Dinaikkan 10%
+}
+// -----------------------------------------------------------------------------
+
+return {unitPrice: Math.round(finalPrice)};
 }
 
 function getProductDiscount(item){
@@ -549,9 +550,6 @@ const m=rules.find(r=>item.qty>=(parseInt(r.MinQty)||0));
 return m?parseDiscount(m.ProductDiscRate):0;
 }
 
-// ==========================================
-// [UPDATE] Label Promo Info disesuaikan untuk PADDO
-// ==========================================
 function getPromoInfo(item){
 if(!item.found||!item.promoEnabled)return'No Promo';
 const promoType=item.promoType;
@@ -561,7 +559,6 @@ else if(promoType==='TIER'){if(item.qty>0)parts.push('Promo Tier Tissue');}
 const disc=getProductDiscount(item);
 if(disc>0)parts.push('Promo '+ (disc*100) +'%');
 
-// --- LOGIKA LABEL KHUSUS PADDO ---
 if(promoType==='PADDO'){
     const s=calculatePromoSplit(item.qty,promoType);
     if(s.freeQty>0){
@@ -569,7 +566,6 @@ if(promoType==='PADDO'){
         parts.push(`Beli 11 Lusin Gratis ${freeLusin} Lusin (Bayar ${s.paidQty} pcs, Free ${s.freeQty} pcs)`);
     }
 } 
-// -----------------------------------------
 else if(promoType!=='PASIR'&&promoType!=='NONE'&&promoType!=='SBO'){
 const s=calculatePromoSplit(item.qty,promoType);
 if(s.freeQty>0)parts.push('Buy11Get1 (Bayar '+s.paidQty+', Free '+s.freeQty+')');
@@ -721,11 +717,11 @@ rows.push({
     shippingAddress:customer.ShippingAddress||'',
     orderDate:orderDateStr, dueDate:dueDateStr, shippingDate:shippingDateStr,
     orderNumber, message:FIXED_MESSAGE,
-    productName:item.productName,   // dari master data aktif (kolom *ProductName)
-    description:item.description,   // dari master data aktif (kolom Description)
+    productName:item.productName,
+    description:item.description,
     quantity:s.paidQty, unit:item.unit,
-    unitPrice:priceInfo.unitPrice,  // dari master data aktif
-    productDiscountRate:productDiscount? (productDiscount*100)+'%':'', // FIXED: Tambah '%'
+    unitPrice:priceInfo.unitPrice,
+    productDiscountRate:productDiscount? (productDiscount*100)+'%':'',
     orderDiscount:customerDiscount? (customerDiscount*100)+'%':'',
     taxName:taxNameVal
 });
@@ -740,7 +736,7 @@ rows.push({
     productName:item.productName,
     description:item.description,
     quantity:s.freeQty, unit:item.unit, unitPrice:0,
-    productDiscountRate:productDiscount? (productDiscount*100)+'%':'', // FIXED: Tambah '%'
+    productDiscountRate:productDiscount? (productDiscount*100)+'%':'',
     orderDiscount:customerDiscount? (customerDiscount*100)+'%':'',
     taxName:taxNameVal
 });
@@ -790,7 +786,6 @@ document.getElementById('stock-source-select').addEventListener('change', functi
     renderReviewTable();
 });
 
-// Ganti Tujuan Input Order -> rebuild semua item dari master data yang benar
 document.getElementById('order-source-select').addEventListener('change', function(){
     state.orderSource = this.value;
     updateMasterLabel();
