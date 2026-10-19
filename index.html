@@ -499,7 +499,7 @@ c.querySelectorAll('.customer-item').forEach(el=>el.addEventListener('click',()=
 document.getElementById('customer-search').addEventListener('input',function(){const q=normalizeStr(this.value);document.querySelectorAll('.customer-item').forEach(el=>{const idx=parseInt(el.dataset.idx);const x=state.gsheetData.customerList[idx];if(!x)return;el.style.display=normalizeStr(x.CustomerName).includes(q)?'block':'none'})});
 
 // ==========================================
-// [UPDATE] Logika Kenaikan Harga 10% untuk SBO pada Customer Tertentu
+// [UPDATE] Logika Penyesuaian Harga untuk SBO pada Customer Tertentu (Dibagi 0.9)
 // ==========================================
 function calculatePrice(item,customer){
 if(!item.found)return{unitPrice:0};
@@ -528,15 +528,15 @@ if (item.nettPriceOutput === 'NettSellPrice' || item.nettPriceOutput === 'NetSel
     basePrice = item.priceList;
 }
 
-// --- TAMBAHAN LOGIKA BARU: KENAIKAN HARGA 10% UNTUK SBO PADA CUSTOMER TERTENTU ---
+// --- LOGIKA BARU: HARGA DIBAGI 0.9 UNTUK SBO PADA CUSTOMER TERTENTU ---
 const customerName = (customer.CustomerName || '').trim().toUpperCase();
 const isSpecialCustomer = customerName.includes('JEJE JAYA ABADI') || customerName.includes('PUTRA JEJE RADAL');
 
 let finalPrice = basePrice;
 if (item.promoType === 'SBO' && isSpecialCustomer) {
-    finalPrice = basePrice * 1.10; // Dinaikkan 10%
+    finalPrice = basePrice / 0.9; // Dibagi 0.9 sesuai permintaan
 }
-// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 
 return {unitPrice: Math.round(finalPrice)};
 }
