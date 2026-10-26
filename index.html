@@ -265,7 +265,42 @@ function formatDateDDMMYYYY(dateInput) {
     return `${day}/${month}/${year}`;
 }
 
-function calculatePromoSplit(qty,promoType){
+// Helper untuk mendapatkan isi pcs per box produk Flaska
+function getFlaskaPcsPerBox(productCode) {
+    const map = {
+        'MP-40500599': 24,
+        'MP-40500699': 18,
+        'MP-40500799': 12,
+        'MP-40500899': 12,
+        'MP-40500999': 8
+    };
+    return map[(productCode || '').trim().toUpperCase()] || 1;
+}
+
+function calculatePromoSplit(qty, promoType, productCode, isOktaSeller) {
+    // RULE 2: Jika seller Okta, tidak ada free item, hanya diskon 20%
+    if (isOktaSeller) {
+        return { paidQty: qty, freeQty: 0, type: 'NONE' };
+    }
+
+    // RULE 1: Promo M-PETS FLASKA (Buy 11 Box + 1 Box Free)
+    const cleanCode = (productCode || '').trim().toUpperCase();
+    const pcsPerBox = getFlaskaPcsPerBox(cleanCode);
+    
+    if (pcsPerBox > 1) { // Jika produk ada di daftar Flaska
+        const totalBoxes = Math.floor(qty / pcsPerBox);
+        const freeBoxes = Math.floor(totalBoxes / 11);
+        if (freeBoxes > 0) {
+            return {
+                paidQty: qty, // Qty input tetap dibayar
+                freeQty: freeBoxes * pcsPerBox, // Free ditambahkan sesuai kelipatan 11 box
+                type: 'PROMO_FLASKA_BOX'
+            };
+        }
+        return { paidQty: qty, freeQty: 0, type: 'NONE' };
+    }
+
+    // Logic existing lainnya
     if(promoType==='PASIR'||promoType==='NONE'||promoType==='SBO') return {paidQty:qty,freeQty:0,type:'NONE'};
     
     if(promoType==='PADDO'){
@@ -275,7 +310,6 @@ function calculatePromoSplit(qty,promoType){
         } else {
             blocks = Math.floor(qty / 132);
         }
-        
         if(blocks > 0){
             let remainder = qty % 144;
             let paidQty;
@@ -284,11 +318,7 @@ function calculatePromoSplit(qty,promoType){
             } else {
                 paidQty = qty;
             }
-            return {
-                paidQty: paidQty,
-                freeQty: blocks * 12,
-                type: 'PROMO_PADDO'
-            };
+            return { paidQty: paidQty, freeQty: blocks * 12, type: 'PROMO_PADDO' };
         }
         return {paidQty:qty, freeQty:0, type:'NONE'};
     }
@@ -498,9 +528,6 @@ c.querySelectorAll('.customer-item').forEach(el=>el.addEventListener('click',()=
 }
 document.getElementById('customer-search').addEventListener('input',function(){const q=normalizeStr(this.value);document.querySelectorAll('.customer-item').forEach(el=>{const idx=parseInt(el.dataset.idx);const x=state.gsheetData.customerList[idx];if(!x)return;el.style.display=normalizeStr(x.CustomerName).includes(q)?'block':'none'})});
 
-// ==========================================
-// [UPDATE] Logika Penyesuaian Harga untuk SBO pada Customer Tertentu (Dibagi 0.9)
-// ==========================================
 function calculatePrice(item,customer){
 if(!item.found)return{unitPrice:0};
 const area=(customer.Area||'').trim().toUpperCase();
@@ -528,15 +555,14 @@ if (item.nettPriceOutput === 'NettSellPrice' || item.nettPriceOutput === 'NetSel
     basePrice = item.priceList;
 }
 
-// --- LOGIKA BARU: HARGA DIBAGI 0.9 UNTUK SBO PADA CUSTOMER TERTENTU ---
+// LOGIKA HARGA DIBAGI 0.9 UNTUK SBO PADA CUSTOMER TERTENTU
 const customerName = (customer.CustomerName || '').trim().toUpperCase();
 const isSpecialCustomer = customerName.includes('JEJE JAYA ABADI') || customerName.includes('PUTRA JEJE RADAL');
 
 let finalPrice = basePrice;
 if (item.promoType === 'SBO' && isSpecialCustomer) {
-    finalPrice = basePrice / 0.9; // Dibagi 0.9 sesuai permintaan
+    finalPrice = basePrice / 0.9; 
 }
-// -----------------------------------------------------------------------
 
 return {unitPrice: Math.round(finalPrice)};
 }
@@ -550,27 +576,42 @@ const m=rules.find(r=>item.qty>=(parseInt(r.MinQty)||0));
 return m?parseDiscount(m.ProductDiscRate):0;
 }
 
-function getPromoInfo(item){
-if(!item.found||!item.promoEnabled)return'No Promo';
-const promoType=item.promoType;
-const parts=[];
-if(promoType==='PASIR'){if(item.qty>0)parts.push('Promo Tier Pasir');}
-else if(promoType==='TIER'){if(item.qty>0)parts.push('Promo Tier Tissue');}
-const disc=getProductDiscount(item);
-if(disc>0)parts.push('Promo '+ (disc*100) +'%');
-
-if(promoType==='PADDO'){
-    const s=calculatePromoSplit(item.qty,promoType);
-    if(s.freeQty>0){
-        const freeLusin = s.freeQty / 12;
-        parts.push(`Beli 11 Lusin Gratis ${freeLusin} Lusin (Bayar ${s.paidQty} pcs, Free ${s.freeQty} pcs)`);
+function getPromoInfo(item, isOktaSeller = false) {
+    if(!item.found || !item.promoEnabled) return 'No Promo';
+    
+    // RULE 2: Tampilkan info diskon 20% khusus Okta
+    if (isOktaSeller) {
+        return 'Diskon 20% (Seller Okta)';
     }
-} 
-else if(promoType!=='PASIR'&&promoType!=='NONE'&&promoType!=='SBO'){
-const s=calculatePromoSplit(item.qty,promoType);
-if(s.freeQty>0)parts.push('Buy11Get1 (Bayar '+s.paidQty+', Free '+s.freeQty+')');
-}
-return parts.length?parts.join(' + '):'No Promo';
+
+    const promoType = item.promoType;
+    const parts = [];
+    if(promoType==='PASIR'){if(item.qty>0)parts.push('Promo Tier Pasir');}
+    else if(promoType==='TIER'){if(item.qty>0)parts.push('Promo Tier Tissue');}
+    
+    const disc = getProductDiscount(item);
+    if(disc>0) parts.push('Promo '+ (disc*100) +'%');
+
+    if(promoType==='PADDO'){
+        const s = calculatePromoSplit(item.qty, promoType, item.productCode, false);
+        if(s.freeQty>0){
+            const freeLusin = s.freeQty / 12;
+            parts.push(`Beli 11 Lusin Gratis ${freeLusin} Lusin (Bayar ${s.paidQty} pcs, Free ${s.freeQty} pcs)`);
+        }
+    } 
+    // RULE 1: Info Promo Flaska Box
+    else if (promoType === 'PROMO_FLASKA_BOX' || getFlaskaPcsPerBox(item.productCode) > 1) {
+        const s = calculatePromoSplit(item.qty, item.promoType, item.productCode, false);
+        if (s.freeQty > 0) {
+            const freeBoxes = s.freeQty / getFlaskaPcsPerBox(item.productCode);
+            parts.push(`Beli 11 Box Gratis ${freeBoxes} Box (Free ${s.freeQty} pcs)`);
+        }
+    }
+    else if(promoType!=='PASIR'&&promoType!=='NONE'&&promoType!=='SBO'){
+        const s = calculatePromoSplit(item.qty, promoType, item.productCode, false);
+        if(s.freeQty>0) parts.push('Buy11Get1 (Bayar '+s.paidQty+', Free '+s.freeQty+')');
+    }
+    return parts.length ? parts.join(' + ') : 'No Promo';
 }
 
 function buildReviewHeader(){
@@ -626,7 +667,12 @@ default: return '';
 function renderReviewTable(){
 const customer=state.gsheetData.customerList[state.selectedCustomer];if(!customer)return;
 document.getElementById('review-customer-info').textContent=`Customer: ${customer.CustomerName} | Area: ${customer.Area} | Discount: ${parseDiscount(customer.DiscountRate)*100}%`;
-let rows=state.processedItems.map((item,idx)=>({item,idx,d:derive(item,customer)}));
+
+// Cek Seller Okta
+const customerName = (customer.CustomerName || '').toUpperCase();
+const isOktaSeller = customerName.includes('OKTA FANTA SATU'); // CATATAN: Jika field nama seller berbeda (misal: customer.Salesperson), ubah 'customer.CustomerName' di sini.
+
+let rows=state.processedItems.map((item,idx)=>({item,idx,d:derive(item,customer, isOktaSeller)}));
 let avail=0,low=0,notAvail=0;
 rows.forEach(r=>{if(r.d.status==='Available')avail++;else if(r.d.status==='Low Stock')low++;else if(r.d.status==='Not Available')notAvail++});
 const af=Object.entries(state.filters).filter(([k,v])=>v&&v.trim()!=='');
@@ -668,15 +714,16 @@ document.getElementById('review-summary').innerHTML=`
 tbody.querySelectorAll('.qty-input').forEach(inp=>inp.addEventListener('change',function(){state.processedItems[this.dataset.idx].qty=parseInt(this.value)||0;renderReviewTable()}));
 tbody.querySelectorAll('.toggle').forEach(tog=>tog.addEventListener('click',function(){const i=this.dataset.toggle;state.processedItems[i].promoEnabled=!state.processedItems[i].promoEnabled;renderReviewTable()}));
 }
-function derive(item,customer){
+
+function derive(item, customer, isOktaSeller) {
     let effectiveStock = item.totalStock;
     if (state.stockSource === 'PT') effectiveStock = item.stockPT;
     else if (state.stockSource === 'PRIBADI') effectiveStock = item.stockPribadi;
 
     const status=!item.found?'Not Found':(effectiveStock===0?'Not Available':(effectiveStock<item.qty?'Low Stock':'Available'));
     const unitPrice=calculatePrice(item,customer).unitPrice;
-    const s=item.promoEnabled?calculatePromoSplit(item.qty,item.promoType):{paidQty:item.qty,freeQty:0};
-    return {status,unitPrice,paidQty:s.paidQty,totalPrice:s.paidQty*unitPrice,promoInfo:getPromoInfo(item),effectiveStock};
+    const s=item.promoEnabled?calculatePromoSplit(item.qty,item.promoType,item.productCode, isOktaSeller):{paidQty:item.qty,freeQty:0};
+    return {status,unitPrice,paidQty:s.paidQty,totalPrice:s.paidQty*unitPrice,promoInfo:getPromoInfo(item, isOktaSeller),effectiveStock};
 }
 
 function generatePreview(){
@@ -686,6 +733,10 @@ if(!orderNumber){on.classList.add('input-error');oe.style.display='block';on.foc
 on.classList.remove('input-error');oe.style.display='none';
 const customer=state.gsheetData.customerList[state.selectedCustomer];
 
+// Cek Seller Okta
+const customerName = (customer.CustomerName || '').toUpperCase();
+const isOktaSeller = customerName.includes('OKTA FANTA SATU'); // CATATAN: Jika field nama seller berbeda, ubah di sini.
+
 const today = new Date();
 const orderDateStr = formatDateDDMMYYYY(today);
 const dueDate = new Date(today);
@@ -694,7 +745,6 @@ const dueDateStr = formatDateDDMMYYYY(dueDate);
 const sd=document.getElementById('shipping-date').value;
 const shippingDateStr = sd ? formatDateDDMMYYYY(new Date(sd)) : '';
 
-const customerDiscount=parseDiscount(customer.DiscountRate);
 const rows=[];
 state.processedItems.forEach(item=>{
 if(!item.found||item.qty<=0)return;
@@ -704,8 +754,14 @@ else if (state.stockSource === 'PRIBADI') effectiveStock = item.stockPribadi;
 if(effectiveStock===0)return;
 
 const priceInfo=calculatePrice(item,customer);
-const productDiscount=getProductDiscount(item);
-const s=item.promoEnabled?calculatePromoSplit(item.qty,item.promoType):{paidQty:item.qty,freeQty:0};
+
+// RULE 2: Paksa diskon 20% untuk Okta Fanta Satu
+let productDiscount = getProductDiscount(item);
+if (isOktaSeller) {
+    productDiscount = 0.20; 
+}
+
+const s=item.promoEnabled?calculatePromoSplit(item.qty,item.promoType,item.productCode, isOktaSeller):{paidQty:item.qty,freeQty:0};
 
 let taxNameVal = '';
 if (state.orderSource === 'PT') { taxNameVal = 'VAT -'; }
@@ -722,7 +778,7 @@ rows.push({
     quantity:s.paidQty, unit:item.unit,
     unitPrice:priceInfo.unitPrice,
     productDiscountRate:productDiscount? (productDiscount*100)+'%':'',
-    orderDiscount:customerDiscount? (customerDiscount*100)+'%':'',
+    orderDiscount:'', // Order discount dipisah, product discount yang diisi 20%
     taxName:taxNameVal
 });
 if(s.freeQty>0){
@@ -737,13 +793,14 @@ rows.push({
     description:item.description,
     quantity:s.freeQty, unit:item.unit, unitPrice:0,
     productDiscountRate:productDiscount? (productDiscount*100)+'%':'',
-    orderDiscount:customerDiscount? (customerDiscount*100)+'%':'',
+    orderDiscount:'',
     taxName:taxNameVal
 });
 }
 });
 state.outputRows=rows;renderPreview(rows,customer);goToStep(4);
 }
+
 function renderPreview(rows,customer){
 document.getElementById('preview-table-body').innerHTML=rows.map((r,i)=>`<tr class="${r.unitPrice===0?'row-free':''}"><td>${i+1}</td><td>${r.productName}</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${r.description}</td><td>${r.quantity}</td><td>${r.unit}</td><td style="font-weight:600">${r.unitPrice===0?'FREE (0)':formatCurrency(r.unitPrice)}</td><td>${r.productDiscountRate||'-'}</td><td>${r.orderDiscount||'-'}</td><td>${r.taxName||'-'}</td></tr>`).join('');
 const tq=rows.reduce((s,r)=>s+(parseInt(r.quantity)||0),0);
