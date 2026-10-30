@@ -233,7 +233,14 @@ tr.row-free td{background:var(--teal-soft);font-style:italic}
 document.addEventListener('DOMContentLoaded',()=>{
 const GSHEET_ID='1qcYg15I3Peg_oNhdCXNciEnG82ltj22jtoA4jz6d4pE';
 const GSHEET_BASE=`https://docs.google.com/spreadsheets/d/${GSHEET_ID}/gviz/tq?tqx=out:csv&sheet=`;
-const FIXED_MESSAGE="- Barang yang sudah dibeli tidak dapat dikembalikan atau ditukar.\n\n- Harap mencantumkan Nomor Faktur di kolom berita untuk konfirmasi pembayaran.\n\n- Payment Rekening BCA : \n5810550718 A/N PT.OLEGO MANDIRI INDONESIA.";
+
+// [UPDATE] Fungsi dinamis untuk pesan pembayaran berdasarkan Tujuan Input Order
+function getFixedMessage() {
+    if (state.orderSource === 'PRIBADI') {
+        return "- Barang yang sudah dibeli tidak dapat dikembalikan atau ditukar.\n\n- Harap mencantumkan Nomor Faktur di kolom berita untuk konfirmasi pembayaran.\n\n- Payment Rekening BCA : \n6370311097 A/N Ryan Demitrius.";
+    }
+    return "- Barang yang sudah dibeli tidak dapat dikembalikan atau ditukar.\n\n- Harap mencantumkan Nomor Faktur di kolom berita untuk konfirmasi pembayaran.\n\n- Payment Rekening BCA : \n5810550718 A/N PT.OLEGO MANDIRI INDONESIA.";
+}
 
 const state={
     currentStep:1,
@@ -278,29 +285,26 @@ function getFlaskaPcsPerBox(productCode) {
 }
 
 function calculatePromoSplit(qty, promoType, productCode, isOktaSeller) {
-    // RULE 2: Jika seller Okta, tidak ada free item, hanya diskon 20%
     if (isOktaSeller) {
         return { paidQty: qty, freeQty: 0, type: 'NONE' };
     }
 
-    // RULE 1: Promo M-PETS FLASKA (Buy 11 Box + 1 Box Free)
     const cleanCode = (productCode || '').trim().toUpperCase();
     const pcsPerBox = getFlaskaPcsPerBox(cleanCode);
     
-    if (pcsPerBox > 1) { // Jika produk ada di daftar Flaska
+    if (pcsPerBox > 1) { 
         const totalBoxes = Math.floor(qty / pcsPerBox);
         const freeBoxes = Math.floor(totalBoxes / 11);
         if (freeBoxes > 0) {
             return {
-                paidQty: qty, // Qty input tetap dibayar
-                freeQty: freeBoxes * pcsPerBox, // Free ditambahkan sesuai kelipatan 11 box
+                paidQty: qty, 
+                freeQty: freeBoxes * pcsPerBox, 
                 type: 'PROMO_FLASKA_BOX'
             };
         }
         return { paidQty: qty, freeQty: 0, type: 'NONE' };
     }
 
-    // Logic existing lainnya
     if(promoType==='PASIR'||promoType==='NONE'||promoType==='SBO') return {paidQty:qty,freeQty:0,type:'NONE'};
     
     if(promoType==='PADDO'){
@@ -449,6 +453,9 @@ function rebuildItems(){
   const sPT=state.cache.sPT||{byName:{},byCode:{}};
   const sPr=state.cache.sPr||{byName:{},byCode:{}};
 
+  // [UPDATE] Tentukan default unit berdasarkan orderSource
+  const defaultUnit = state.orderSource === 'PRIBADI' ? 'pcs' : 'Pcs';
+
   const merged=new Map();
   orderItems.forEach(r=>{
     const rDesc=normKey(r.deskripsi);
@@ -469,7 +476,7 @@ function rebuildItems(){
       const fa=findStock(sPT,mock), fb=findStock(sPr,mock);
       if(fa>0)a=fa; if(fb>0)b=fb;
     }
-    if(!p)return{kode:m.kode,deskripsi:m.deskripsi,qty:m.qty,found:false,productName:m.deskripsi,productCode:m.kode,description:m.deskripsi,unit:'Pcs',promoType:'NONE',nettPriceOutput:'NettSellPricePPN',netSellPrice:0,netSellPricePPN:0,priceList:0,stockPT:a,stockPribadi:b,totalStock:a+b,promoEnabled:true,hasTierWarning:false};
+    if(!p)return{kode:m.kode,deskripsi:m.deskripsi,qty:m.qty,found:false,productName:m.deskripsi,productCode:m.kode,description:m.deskripsi,unit:defaultUnit,promoType:'NONE',nettPriceOutput:'NettSellPricePPN',netSellPrice:0,netSellPricePPN:0,priceList:0,stockPT:a,stockPribadi:b,totalStock:a+b,promoEnabled:true,hasTierWarning:false};
     const promoType=(p.PromoType||'').trim().toUpperCase();
     let hasTierWarning=false;
     if(promoType==='TIER'||promoType==='PASIR'){ if(!state.gsheetData.promoTier.some(t=>normKey(t.Deskripsi)===normKey(p.Description)))hasTierWarning=true; }
@@ -478,7 +485,7 @@ function rebuildItems(){
       productName:p.ProductName||p.Description||m.deskripsi,
       productCode:p.ProductCode||p.Kode||m.kode,
       description:p.Description||m.deskripsi,
-      unit:p.Unit||'Pcs',
+      unit: p.Unit || defaultUnit, // [UPDATE] Gunakan defaultUnit dinamis
       promoType,
       nettPriceOutput:(p.NettPriceOutput||'NettSellPricePPN').trim(),
       netSellPrice:parsePrice(p.NetSellPrice),
@@ -555,7 +562,6 @@ if (item.nettPriceOutput === 'NettSellPrice' || item.nettPriceOutput === 'NetSel
     basePrice = item.priceList;
 }
 
-// LOGIKA HARGA DIBAGI 0.9 UNTUK SBO PADA CUSTOMER TERTENTU
 const customerName = (customer.CustomerName || '').trim().toUpperCase();
 const isSpecialCustomer = customerName.includes('JEJE JAYA ABADI') || customerName.includes('PUTRA JEJE RADAL');
 
@@ -578,8 +584,6 @@ return m?parseDiscount(m.ProductDiscRate):0;
 
 function getPromoInfo(item, isOktaSeller = false) {
     if(!item.found || !item.promoEnabled) return 'No Promo';
-    
-    // RULE 2: Tampilkan info diskon 20% khusus Okta
     if (isOktaSeller) {
         return 'Diskon 20% (Seller Okta)';
     }
@@ -599,7 +603,6 @@ function getPromoInfo(item, isOktaSeller = false) {
             parts.push(`Beli 11 Lusin Gratis ${freeLusin} Lusin (Bayar ${s.paidQty} pcs, Free ${s.freeQty} pcs)`);
         }
     } 
-    // RULE 1: Info Promo Flaska Box
     else if (promoType === 'PROMO_FLASKA_BOX' || getFlaskaPcsPerBox(item.productCode) > 1) {
         const s = calculatePromoSplit(item.qty, item.promoType, item.productCode, false);
         if (s.freeQty > 0) {
@@ -668,9 +671,8 @@ function renderReviewTable(){
 const customer=state.gsheetData.customerList[state.selectedCustomer];if(!customer)return;
 document.getElementById('review-customer-info').textContent=`Customer: ${customer.CustomerName} | Area: ${customer.Area} | Discount: ${parseDiscount(customer.DiscountRate)*100}%`;
 
-// Cek Seller Okta
 const customerName = (customer.CustomerName || '').toUpperCase();
-const isOktaSeller = customerName.includes('OKTA FANTA SATU'); // CATATAN: Jika field nama seller berbeda (misal: customer.Salesperson), ubah 'customer.CustomerName' di sini.
+const isOktaSeller = customerName.includes('OKTA FANTA SATU'); 
 
 let rows=state.processedItems.map((item,idx)=>({item,idx,d:derive(item,customer, isOktaSeller)}));
 let avail=0,low=0,notAvail=0;
@@ -733,9 +735,8 @@ if(!orderNumber){on.classList.add('input-error');oe.style.display='block';on.foc
 on.classList.remove('input-error');oe.style.display='none';
 const customer=state.gsheetData.customerList[state.selectedCustomer];
 
-// Cek Seller Okta
 const customerName = (customer.CustomerName || '').toUpperCase();
-const isOktaSeller = customerName.includes('OKTA FANTA SATU'); // CATATAN: Jika field nama seller berbeda, ubah di sini.
+const isOktaSeller = customerName.includes('OKTA FANTA SATU'); 
 
 const today = new Date();
 const orderDateStr = formatDateDDMMYYYY(today);
@@ -755,7 +756,6 @@ if(effectiveStock===0)return;
 
 const priceInfo=calculatePrice(item,customer);
 
-// RULE 2: Paksa diskon 20% untuk Okta Fanta Satu
 let productDiscount = getProductDiscount(item);
 if (isOktaSeller) {
     productDiscount = 0.20; 
@@ -766,19 +766,20 @@ const s=item.promoEnabled?calculatePromoSplit(item.qty,item.promoType,item.produ
 let taxNameVal = '';
 if (state.orderSource === 'PT') { taxNameVal = 'VAT -'; }
 
+// [UPDATE] Gunakan fungsi getFixedMessage() agar pesan berubah dinamis
 rows.push({
     customer:customer.CustomerName,
     email: customer.Email || '',
     billingAddress:customer.BillingAddress||'',
     shippingAddress:customer.ShippingAddress||'',
     orderDate:orderDateStr, dueDate:dueDateStr, shippingDate:shippingDateStr,
-    orderNumber, message:FIXED_MESSAGE,
+    orderNumber, message: getFixedMessage(),
     productName:item.productName,
     description:item.description,
     quantity:s.paidQty, unit:item.unit,
     unitPrice:priceInfo.unitPrice,
     productDiscountRate:productDiscount? (productDiscount*100)+'%':'',
-    orderDiscount:'', // Order discount dipisah, product discount yang diisi 20%
+    orderDiscount:'', 
     taxName:taxNameVal
 });
 if(s.freeQty>0){
@@ -788,7 +789,7 @@ rows.push({
     billingAddress:customer.BillingAddress||'',
     shippingAddress:customer.ShippingAddress||'',
     orderDate:orderDateStr, dueDate:dueDateStr, shippingDate:shippingDateStr,
-    orderNumber, message:FIXED_MESSAGE,
+    orderNumber, message: getFixedMessage(),
     productName:item.productName,
     description:item.description,
     quantity:s.freeQty, unit:item.unit, unitPrice:0,
